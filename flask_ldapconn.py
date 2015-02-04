@@ -53,8 +53,8 @@ class LDAPConn(object):
         if current_app.config.get('LDAP_USE_TLS'):
             ldap_conn.start_tls_s()
 
-        ldap_conn.simple_bind_s(current_app.config.get('LDAP_BINDDN'),
-                                current_app.config.get('LDAP_SECRET'))
+        ldap_conn.bind_s(current_app.config.get('LDAP_BINDDN'),
+                         current_app.config.get('LDAP_SECRET'))
       
         return ldap_conn
 
@@ -70,4 +70,25 @@ class LDAPConn(object):
             if not hasattr(ctx, 'ldap_conn'):
                 ctx.ldap_conn = self.connect()
             return ctx.ldap_conn
+
+    def compare(self, *args):
+        return self.connection.compare_s(*args)
+
+    def delete(self, *args):
+        return self.connection.delete_s(*args)
+
+    def modrdn(self, *args):
+        return self.connection.modrdn_s(*args)
+
+    def passwd(self, *args):
+        return self.connection.passwd_s(*args)
+
+    def rename(self, *args):
+        return self.connection.rename_s(*args)
+
+    def search(self, *args):
+        return self.connection.search_s(*args)
+
+    def whoami(self):
+        return self.connection.whoami_s()
 
