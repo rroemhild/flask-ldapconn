@@ -1,7 +1,7 @@
 Flask-LDAPConn
 ==============
 
-Flask-LDAPConn is a Flask extension providing `python-ldap <http://www.python-ldap.org/>`_ connection object for accessing LDAP servers.
+Flask-LDAPConn is a Flask extension providing `ldap3 <https://github.com/cannatag/ldap3>`_ (an LDAP V3 pure Python client) connection object for accessing LDAP servers.
 
 
 Installation
@@ -19,13 +19,12 @@ Your configuration should be declared within your Flask config. Sample configura
 
 .. code-block:: python
 
-    LDAP_URI = 'ldap://localhost:389'
+    LDAP_SERVER = 'localhost'
+    LDAP_PORT = 389
     LDAP_BINDDN = 'cn=admin,dc=example,dc=com'
     LDAP_SECRET = 'forty-two'
     LDAP_TIMEOUT = 10
     LDAP_USE_TLS = True
-    LDAP_USE_SSL = False
-    LDAP_REQUIRE_CERT = False
     LDAP_CERT_PATH = '/etc/openldap/certs'
 
 To create the ldap instance within your application
@@ -38,36 +37,23 @@ To create the ldap instance within your application
     app = Flask(__name__)
     ldap_conn = LDAPConn(app)
 
-or
-
-.. code-block:: python
-
-    from flask import Flask
-    from flask_ldapconn import LDAPConn
-
-    ldap_conn = LDAPConn()
-
-    def create_app():
-        app = Flask(__name__)
-        ldap_conn.init_app(app)
-        return app
-
 
 Usage
 -----
 
 .. code-block:: python
 
-    from ldap import SCOPE_SUBTREE
+    from ldap3 import SUBTREE
     from app import ldap_conn
 
     @app.route('/')
     def index():
         basedn = 'ou=people,dc=example,dc=com'
-        searchfilter = '(objectClass=posixAccount)'
-        attrs = ['sn', 'givenName', 'uid', 'mail']        
-        result = ldap_conn.connection.search_s(basedn, SCOPE_SUBTREE,
-                                               search_filter, attrs)
+        search_filter = '(objectClass=posixAccount)'
+        attributes = ['sn', 'givenName', 'uid', 'mail']
+        ldap_conn.search(basedn, search_filter, SUBTREE,
+                         attributes=attributes)
+        response = ldap_conn.get_response()
 
 
 Contribute

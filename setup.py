@@ -4,7 +4,7 @@
 Flask-LDAPConn
 --------------
 
-Flask extension providing python-ldap connection object for accessing LDAP servers.
+Flask extension providing ldap3 connection object for accessing LDAP servers.
 '''
 
 import sys
@@ -19,7 +19,7 @@ setup(
     license='BSD',
     author='Rafael Römhild',
     author_email='rafael@roemhild.de',
-    description='Basic LDAP connection for Flask Applications',
+    description='Basic, pure python, LDAP connection for Flask Applications',
     long_description=open('README.rst').read(),
     py_modules=[
         'flask_ldapconn'
@@ -29,7 +29,7 @@ setup(
     platforms='any',
     install_requires=[
         'Flask>=0.9',
-        'python-ldap>=2.4.19'
+        'ldap3>=0.9.7.2'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

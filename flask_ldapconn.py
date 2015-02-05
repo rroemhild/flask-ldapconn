@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import ldap
+from ssl import CERT_REQUIRED, CERT_OPTIONAL, PROTOCOL_TLSv1
+from ldap3 import Server, Connection, Tls
+from ldap3 import AUTH_SIMPLE, STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
+from ldap3 import AUTO_BIND_TLS_BEFORE_BIND, ALL_ATTRIBUTES, DEREF_ALWAYS
+
 from flask import current_app
 
 
@@ -24,44 +28,48 @@ class LDAPConn(object):
 
         # Default config
         app.config.setdefault('LDAP_URI', 'ldap://localhost:389')
-        app.config.setdefault('LDAP_BINDDN', '')
-        app.config.setdefault('LDAP_SECRET', '')
+        app.config.setdefault('LDAP_SERVER', 'localhost')
+        app.config.setdefault('LDAP_PORT', 389)
+        app.config.setdefault('LDAP_BINDDN', None)
+        app.config.setdefault('LDAP_SECRET', None)
         app.config.setdefault('LDAP_TIMEOUT', 10)
         app.config.setdefault('LDAP_USE_TLS', True)
-        app.config.setdefault('LDAP_USE_SSL', False)
-        app.config.setdefault('LDAP_REQUIRE_CERT', False)
-        app.config.setdefault('LDAP_CERT_PATH', '')
+        app.config.setdefault('LDAP_REQUIRE_CERT', CERT_OPTIONAL)
+        app.config.setdefault('LDAP_CERT_PATH', None)
 
-        ldap.set_option(ldap.OPT_PROTOCOL_VERSION, ldap.VERSION3)
-        ldap.set_option(ldap.OPT_REFERRALS, ldap.DEREF_ALWAYS)
-        ldap.set_option(ldap.OPT_DEREF, ldap.DEREF_ALWAYS)
+        self.tls = Tls(validate=app.config['LDAP_REQUIRE_CERT'],
+                  version=PROTOCOL_TLSv1,
+                  ca_certs_file=app.config['LDAP_CERT_PATH'])
 
-        if app.config.get('LDAP_USE_SSL') or app.config.get('LDAP_USE_TLS'):
-            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
-
-        if app.config.get('LDAP_REQUIRE_CERT'):
-            ldap.set_option(ldap.OPT_X_TLS_DEMAND, True)
-            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_DEMAND)
-            ldap.set_option(ldap.OPT_X_TLS_CACERTFILE,
-                            app.config.get('LDAP_CERT_PATH'))
+        self.ldap_server = Server(
+            host=app.config['LDAP_SERVER'],
+            port=app.config['LDAP_PORT'],
+            get_info=GET_ALL_INFO
+        )
 
     def connect(self):
-        ldap_conn = ldap.initialize(current_app.config.get('LDAP_URI'))
-        ldap_conn.set_option(ldap.OPT_NETWORK_TIMEOUT,
-                             current_app.config.get('LDAP_TIMEOUT'))
+        ldap_conn = Connection(
+            self.ldap_server,
+            auto_bind=AUTO_BIND_TLS_BEFORE_BIND,
+            client_strategy=STRATEGY_SYNC,
+            user=current_app.config['LDAP_BINDDN'],
+            password=current_app.config['LDAP_SECRET'],
+            authentication=AUTH_SIMPLE,
+            check_names=True
+        )
 
-        if current_app.config.get('LDAP_USE_TLS'):
-            ldap_conn.start_tls_s()
+        #ldap_conn.bind()
 
-        ldap_conn.bind_s(current_app.config.get('LDAP_BINDDN'),
-                         current_app.config.get('LDAP_SECRET'))
-      
+        if current_app.config['LDAP_USE_TLS']:
+            ldap_conn.tls = self.tls
+            ldap_conn.start_tls()
+
         return ldap_conn
 
     def teardown(self, exception):
         ctx = stack.top
         if hasattr(ctx, 'ldap_conn'):
-            ctx.ldap_conn.unbind_s()
+            ctx.ldap_conn.unbind()
 
     @property
     def connection(self):
@@ -71,24 +79,15 @@ class LDAPConn(object):
                 ctx.ldap_conn = self.connect()
             return ctx.ldap_conn
 
-    def compare(self, *args):
-        return self.connection.compare_s(*args)
+    def get_result(self):
+        return self.connection.result
 
-    def delete(self, *args):
-        return self.connection.delete_s(*args)
+    def get_response(self):
+        return self.connection.response
 
-    def modrdn(self, *args):
-        return self.connection.modrdn_s(*args)
-
-    def passwd(self, *args):
-        return self.connection.passwd_s(*args)
-
-    def rename(self, *args):
-        return self.connection.rename_s(*args)
-
-    def search(self, *args):
-        return self.connection.search_s(*args)
+    def search(self, *args, **kwargs):
+        return self.connection.search(*args, **kwargs)
 
     def whoami(self):
-        return self.connection.whoami_s()
+        return self.connection.extend.standard.who_am_i()
 
