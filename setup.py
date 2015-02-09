@@ -19,6 +19,7 @@ setup(
     license='BSD',
     author='Rafael Römhild',
     author_email='rafael@roemhild.de',
+    keywords='flask ldap ldap3',
     description='Basic, pure python, LDAP connection for Flask Applications',
     long_description=open('README.rst').read(),
     py_modules=[
