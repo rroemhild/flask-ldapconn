@@ -1,7 +1,9 @@
 Flask-LDAPConn
 ==============
 
-Flask-LDAPConn is a Flask extension providing `ldap3 <https://github.com/cannatag/ldap3>`_ (an LDAP V3 pure Python client) connection object for accessing LDAP servers.
+Flask-LDAPConn is a Flask extension providing `ldap3 <https://github.com/cannatag/ldap3>`_ (an LDAP V3 pure Python client) connection for accessing LDAP servers.
+
+To abstract access to LDAP data this extension also provides a simple model class, currently with read-only access, based on the `ldap3.abstract <http://ldap3.readthedocs.org/en/latest/abstraction.html>`_ package.
 
 
 Installation
@@ -27,7 +29,7 @@ Your configuration should be declared within your Flask config. Sample configura
     LDAP_USE_TLS = True
     LDAP_CERT_PATH = '/etc/openldap/certs'
 
-To create the ldap instance within your application
+To create the ldap instance within your application:
 
 .. code-block:: python
 
@@ -38,13 +40,17 @@ To create the ldap instance within your application
     ldap_conn = LDAPConn(app)
 
 
-Usage
------
+Client sample
+-------------
 
 .. code-block:: python
 
+    from flask import Flask
+    from flask_ldapconn import LDAPConn
     from ldap3 import SUBTREE
-    from app import ldap_conn
+
+    app = Flask(__name__)
+    ldap_conn = LDAPConn(app)
 
     @app.route('/')
     def index():
@@ -54,6 +60,33 @@ Usage
         ldap_conn.search(basedn, search_filter, SUBTREE,
                          attributes=attributes)
         response = ldap_conn.get_response()
+
+
+User model sample
+-----------------
+
+.. code-block:: python
+
+    from flask import Flask
+    from flask_ldapconn import LDAPConn
+
+    app = Flask(__name__)
+    ldap_conn = LDAPConn(app)
+
+    class User(ldap_conn.BaseModel):
+
+        __basedn__ = 'ou=people,dc=example,dc=com'
+        __objectclass__ = ['inetOrgPerson']
+
+        name = ldap_conn.BaseAttr('cn')
+        email = ldap_conn.BaseAttr('mail')
+        userid = ldap_conn.BaseAttr('uid')
+
+    with app.app_context():
+        u = User()
+        res = u.search('name: Rafael')
+        for attr in res.entries:
+            print u'Name: {}'.format(attr.name)
 
 
 Contribute
