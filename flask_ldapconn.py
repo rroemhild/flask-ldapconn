@@ -79,10 +79,10 @@ class LDAPConn(object):
                 ctx.ldap_conn = self.connect()
             return ctx.ldap_conn
 
-    def get_result(self):
+    def result(self):
         return self.connection.result
 
-    def get_response(self):
+    def response(self):
         return self.connection.response
 
     def search(self, *args, **kwargs):
