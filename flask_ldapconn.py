@@ -40,7 +40,7 @@ class LDAPBaseModel(ObjectDef):
         model_reader = Reader(ldap_conn.connection, self,
                               query, self.__basedn__)
         model_reader.search()
-        return model_reader
+        return model_reader.entries
 
 
 class LDAPBaseAttr(object):

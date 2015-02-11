@@ -84,9 +84,9 @@ User model sample
 
     with app.app_context():
         u = User()
-        res = u.search('name: Rafael')
-        for attr in res.entries:
-            print u'Name: {}'.format(attr.name)
+        entries = u.search('email: @example.com')
+        for entry in entries:
+            print u'Name: {}'.format(entry.name)
 
 
 Contribute
