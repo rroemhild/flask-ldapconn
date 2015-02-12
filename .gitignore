@@ -1,3 +1,5 @@
+config.py
+
 *.py[co]
 
 # Packages
@@ -19,6 +21,7 @@ pip-log.txt
 # Unit test / coverage reports
 .coverage
 .tox
+htmlcov
 
 #Translations
 *.mo
