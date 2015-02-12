@@ -144,6 +144,3 @@ class LDAPConn(object):
     def whoami(self):
         return self.connection.extend.standard.who_am_i()
 
-    def Reader(self, *args, **kwargs):
-        return self.connection.Reader(*args, **kwargs)
-
