@@ -3,7 +3,8 @@
 from ssl import CERT_REQUIRED, CERT_OPTIONAL, PROTOCOL_TLSv1
 from ldap3 import Server, Connection, Tls, AttrDef, ObjectDef, Reader
 from ldap3 import AUTH_SIMPLE, STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
-from ldap3 import AUTO_BIND_TLS_BEFORE_BIND, ALL_ATTRIBUTES, DEREF_ALWAYS
+from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
+from ldap3 import ALL_ATTRIBUTES, DEREF_ALWAYS
 
 from flask import current_app
 
@@ -74,7 +75,6 @@ class LDAPConn(object):
 
     def init_app(self, app):
         # Default config
-        app.config.setdefault('LDAP_URI', 'ldap://localhost:389')
         app.config.setdefault('LDAP_SERVER', 'localhost')
         app.config.setdefault('LDAP_PORT', 389)
         app.config.setdefault('LDAP_BINDDN', None)
@@ -103,19 +103,19 @@ class LDAPConn(object):
             app.teardown_request(self.teardown)
 
     def connect(self):
+        auto_bind_strategy = AUTO_BIND_TLS_BEFORE_BIND
+        if current_app.config['LDAP_USE_TLS'] is not True:
+            auto_bind_strategy = AUTO_BIND_NO_TLS
+
         ldap_conn = Connection(
             self.ldap_server,
-            auto_bind=AUTO_BIND_TLS_BEFORE_BIND,
+            auto_bind=auto_bind_strategy,
             client_strategy=STRATEGY_SYNC,
             user=current_app.config['LDAP_BINDDN'],
             password=current_app.config['LDAP_SECRET'],
             authentication=AUTH_SIMPLE,
             check_names=True
         )
-
-        if current_app.config['LDAP_USE_TLS']:
-            ldap_conn.tls = self.tls
-            ldap_conn.start_tls()
 
         return ldap_conn
 
