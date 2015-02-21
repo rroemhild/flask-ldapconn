@@ -11,19 +11,18 @@ from flask_ldapconn import LDAPConn
 
 
 TESTING = True
-EMAIL = 'user1@example.com'
+EMAIL = 'fry@planetexpress.com'
 LDAP_SERVER = 'localhost'
-LDAP_BINDDN = 'cn=admin,dc=example,dc=com'
-LDAP_USE_TLS = False
-LDAP_SECRET = 'secret'
-LDAP_BASEDN = 'ou=people,dc=example,dc=com'
+LDAP_BINDDN = 'cn=admin,dc=planetexpress,dc=com'
+LDAP_SECRET = 'GoodNewsEveryone'
+LDAP_BASEDN = 'ou=people,dc=planetexpress,dc=com'
 LDAP_SEARCH_ATTR = 'mail'
 LDAP_SEARCH_FILTER = '(mail=%s)' % EMAIL
 LDAP_QUERY_FILTER = 'email: %s' % EMAIL
 LDAP_OBJECTCLASS = ['inetOrgPerson']
 
 
-class LDAPConnTestCase(unittest.TestCase):
+class LDAPConnTLSTestCase(unittest.TestCase):
 
     def setUp(self):
         app = flask.Flask(__name__)
@@ -69,7 +68,7 @@ class LDAPConnTestCase(unittest.TestCase):
                              'dn:' + self.app.config['LDAP_BINDDN'])
 
 
-class LDAPConnAnonymousTestCase(LDAPConnTestCase):
+class LDAPConnTLSAnonymousTestCase(LDAPConnTLSTestCase):
 
     def setUp(self):
         app = flask.Flask(__name__)
