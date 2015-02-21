@@ -2,7 +2,7 @@
 
 from ssl import CERT_REQUIRED, CERT_OPTIONAL, PROTOCOL_TLSv1
 from ldap3 import Server, Connection, Tls, AttrDef, ObjectDef, Reader
-from ldap3 import AUTH_SIMPLE, STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
+from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
 from ldap3 import ALL_ATTRIBUTES, DEREF_ALWAYS
 
@@ -113,7 +113,6 @@ class LDAPConn(object):
             client_strategy=STRATEGY_SYNC,
             user=current_app.config['LDAP_BINDDN'],
             password=current_app.config['LDAP_SECRET'],
-            authentication=AUTH_SIMPLE,
             check_names=True
         )
 

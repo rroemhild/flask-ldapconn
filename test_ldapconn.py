@@ -14,7 +14,8 @@ TESTING = True
 EMAIL = 'user1@example.com'
 LDAP_SERVER = 'localhost'
 LDAP_BINDDN = 'cn=admin,dc=example,dc=com'
-LDAP_SECRET = 's3cr3t'
+LDAP_USE_TLS = False
+LDAP_SECRET = 'secret'
 LDAP_BASEDN = 'ou=people,dc=example,dc=com'
 LDAP_SEARCH_ATTR = 'mail'
 LDAP_SEARCH_FILTER = '(mail=%s)' % EMAIL
@@ -27,7 +28,7 @@ class LDAPConnTestCase(unittest.TestCase):
     def setUp(self):
         app = flask.Flask(__name__)
         app.config.from_object(__name__)
-        app.config.from_object('config')
+        app.config.from_envvar('LDAP_SETTINGS', silent=True)
         ldap = flask_ldapconn.LDAPConn(app)
 
         self.app = app
@@ -66,6 +67,24 @@ class LDAPConnTestCase(unittest.TestCase):
         with self.app.test_request_context():
             self.assertEqual(self.ldap.whoami(),
                              'dn:' + self.app.config['LDAP_BINDDN'])
+
+
+class LDAPConnAnonymousTestCase(LDAPConnTestCase):
+
+    def setUp(self):
+        app = flask.Flask(__name__)
+        app.config.from_object(__name__)
+        app.config.from_envvar('LDAP_SETTINGS', silent=True)
+        app.config['LDAP_BINDDN'] = None
+        app.config['LDAP_SECRET'] = None
+        ldap = flask_ldapconn.LDAPConn(app)
+
+        self.app = app
+        self.ldap = ldap
+
+    def test_whoami(self):
+        with self.app.test_request_context():
+            self.assertEqual(self.ldap.whoami(), None)
 
 
 if __name__ == '__main__':
