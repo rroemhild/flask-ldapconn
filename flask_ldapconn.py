@@ -85,8 +85,8 @@ class LDAPConn(object):
         app.config.setdefault('LDAP_CERT_PATH', None)
 
         self.tls = Tls(validate=app.config['LDAP_REQUIRE_CERT'],
-                  version=PROTOCOL_TLSv1,
-                  ca_certs_file=app.config['LDAP_CERT_PATH'])
+                       version=PROTOCOL_TLSv1,
+                       ca_certs_file=app.config['LDAP_CERT_PATH'])
 
         self.ldap_server = Server(
             host=app.config['LDAP_SERVER'],

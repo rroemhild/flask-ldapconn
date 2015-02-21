@@ -1,3 +1,11 @@
+0.4-dev 2015-02-21
+------------------
+
+- Return entries instead of Reader object in models (v0.3.1)
+- BUGFIX: Allow unsecure connections (v0.3.2)
+- Allow anonymous auth (v0.3.3)
+
+
 0.3 2015-02-10
 --------------
 
@@ -14,5 +22,5 @@
 --------------
 
 - Conception
-- Initial Commit of Package to GitHub.
+- Initial Commit of Package to GitHub
 
