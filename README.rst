@@ -9,7 +9,7 @@ To abstract access to LDAP data this extension also provides a simple model clas
 Installation
 ------------
 
-.. code-block:: bash
+.. code-block:: shell
 
     pip install flask-ldapconn
 
@@ -21,15 +21,18 @@ Your configuration should be declared within your Flask config. Sample configura
 
 .. code-block:: python
 
+    from ssl import CERT_OPTIONAL
+
     LDAP_SERVER = 'localhost'
     LDAP_PORT = 389
     LDAP_BINDDN = 'cn=admin,dc=example,dc=com'
     LDAP_SECRET = 'forty-two'
     LDAP_TIMEOUT = 10
     LDAP_USE_TLS = True
+    LDAP_REQUIRE_CERT = CERT_OPTIONAL
     LDAP_CERT_PATH = '/etc/openldap/certs'
 
-To create the ldap instance within your application:
+Create the ldap instance within your application:
 
 .. code-block:: python
 
@@ -89,16 +92,27 @@ User model sample
             print u'Name: {}'.format(entry.name)
 
 
-Unit Tests
-----------
+Unit Test
+---------
 
-I use a simple Docker image to run the tests on localhost:
+I use a simple Docker image to run the tests on localhost. The test file ``test_flask_ldapconn.py`` tries to handle ``start`` and ``stop`` of the docker container:
 
 .. code-block:: shell
 
-    docker pull rroemhild/test-openldap
-    docker run --privileged -d -p 389:389 --name flask_ldapconn rroemhild/test-openldap
     python test_flask_ldapconn.py
+
+Run the docker container manual:
+
+.. code-block:: shell
+
+    docker run --privileged -d -p 389:389 --name flask_ldapconn rroemhild/test-openldap
+    DOCKER_TEST=False python test_flask_ldapconn.py
+
+Unit test with your own settings from a file:
+
+.. code-block:: shell
+
+    LDAP_SETTINGS=my_settings.py python test_flask_ldapconn.py
 
 
 Contribute
@@ -110,4 +124,3 @@ Contribute
 #. Send a pull request and bug the maintainer until it gets merged and published.
 
 .. _`the repository`: http://github.com/rroemhild/flask-ldapconn
-
