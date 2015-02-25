@@ -1,7 +1,8 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import with_statement
 
 import os
+import sys
 import time
 import unittest
 
@@ -12,7 +13,7 @@ from ldap3 import SUBTREE
 from flask_ldapconn import LDAPConn
 
 
-DOCKER_TEST = os.environ.get('DOCKER_TEST', True)
+DOCKER_RUN = os.environ.get('DOCKER_RUN', True)
 DOCKER_URL = 'unix://var/run/docker.sock'
 
 TESTING = True
@@ -111,8 +112,9 @@ class LDAPConnNoTLSAnonymousTestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    success = False
     try:
-        if DOCKER_TEST is not True:
+        if DOCKER_RUN is not True:
             raise ValueError('Do not use docker')
 
         from docker import Client
@@ -127,9 +129,13 @@ if __name__ == '__main__':
         time.sleep(3)
 
         print 'Run unit test...'
-        unittest.main(exit=False)
+        runner = unittest.main(exit=False)
+        success = runner.result.wasSuccessful()
 
         print 'Stop and removing container...'
         cli.remove_container(container, force=True)
     except (ImportError, ValueError):
         unittest.main()
+
+    if success is not True:
+        sys.exit(1)

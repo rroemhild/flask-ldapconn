@@ -1,6 +1,17 @@
 Flask-LDAPConn
 ==============
 
+.. image:: https://travis-ci.org/rroemhild/flask-ldapconn.png?branch=master
+    :target: https://travis-ci.org/rroemhild/flask-ldapconn
+
+.. image:: https://pypip.in/version/Flask-LDAPConn/badge.svg?style=flat
+    :target: https://pypi.python.org/pypi/Flask-LDAPConn/
+    :alt: Latest Version
+
+.. image:: https://pypip.in/download/Flask-LDAPConn/badge.svg?style=flat
+    :target: https://pypi.python.org/pypi/Flask-LDAPConn/
+    :alt: Downloads
+
 Flask-LDAPConn is a Flask extension providing `ldap3 <https://github.com/cannatag/ldap3>`_ (an LDAP V3 pure Python client) connection for accessing LDAP servers.
 
 To abstract access to LDAP data this extension also provides a simple model class, currently with read-only access, based on the `ldap3.abstract <http://ldap3.readthedocs.org/en/latest/abstraction.html>`_ package.
@@ -99,6 +110,8 @@ I use a simple Docker image to run the tests on localhost. The test file ``test_
 
 .. code-block:: shell
 
+    pip install docker-py
+    docker pull rroemhild/test-openldap
     python test_flask_ldapconn.py
 
 Run the docker container manual:
@@ -106,7 +119,7 @@ Run the docker container manual:
 .. code-block:: shell
 
     docker run --privileged -d -p 389:389 --name flask_ldapconn rroemhild/test-openldap
-    DOCKER_TEST=False python test_flask_ldapconn.py
+    DOCKER_RUN=False python test_flask_ldapconn.py
 
 Unit test with your own settings from a file:
 
@@ -118,7 +131,7 @@ Unit test with your own settings from a file:
 Contribute
 ----------
 
-#. Check for open issues or open a fresh issue to start a discussion around a feature idea or a bug. There is a Contributor Friendly tag for issues that should be ideal for people who are not very familiar with the codebase yet.
+#. Check for open issues or open a fresh issue to start a discussion around a feature idea or a bug.
 #. Fork `the repository`_ on Github to start making your changes.
 #. Write a test which shows that the bug was fixed or that the feature works as expected.
 #. Send a pull request and bug the maintainer until it gets merged and published.
