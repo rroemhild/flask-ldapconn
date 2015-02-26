@@ -75,6 +75,20 @@ class LDAPConnTestCase(unittest.TestCase):
                              to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
 
 
+class LDAPConnSSLTestCase(LDAPConnTestCase):
+
+    def setUp(self):
+        app = flask.Flask(__name__)
+        app.config.from_object(__name__)
+        app.config.from_envvar('LDAP_SETTINGS', silent=True)
+        app.config['LDAP_PORT'] = app.config.get('LDAP_SSL_PORT', 636)
+        app.config['LDAP_USE_SSL'] = True
+        ldap = flask_ldapconn.LDAPConn(app)
+
+        self.app = app
+        self.ldap = ldap
+
+
 class LDAPConnAnonymousTestCase(LDAPConnTestCase):
 
     def setUp(self):
@@ -121,10 +135,11 @@ if __name__ == '__main__':
         from docker import Client
         cli = Client(base_url=DOCKER_URL)
         container = cli.create_container(image='rroemhild/test-openldap',
-                                         ports=[389])
+                                         ports=[389, 636])
 
         print('Starting docker container {0}...'.format(container.get('Id')))
-        cli.start(container, privileged=True, port_bindings={389: 389})
+        cli.start(container, privileged=True, port_bindings={389: 389,
+                                                             636: 636})
 
         print('Wait 3 seconds until slapd is started...')
         time.sleep(3)
