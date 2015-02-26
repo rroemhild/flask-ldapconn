@@ -80,6 +80,7 @@ class LDAPConn(object):
         app.config.setdefault('LDAP_BINDDN', None)
         app.config.setdefault('LDAP_SECRET', None)
         app.config.setdefault('LDAP_TIMEOUT', 10)
+        app.config.setdefault('LDAP_USE_SSL', False)
         app.config.setdefault('LDAP_USE_TLS', True)
         app.config.setdefault('LDAP_REQUIRE_CERT', CERT_OPTIONAL)
         app.config.setdefault('LDAP_CERT_PATH', None)
@@ -91,6 +92,7 @@ class LDAPConn(object):
         self.ldap_server = Server(
             host=app.config['LDAP_SERVER'],
             port=app.config['LDAP_PORT'],
+            use_ssl=app.config['LDAP_USE_SSL'],
             get_info=GET_ALL_INFO
         )
 
