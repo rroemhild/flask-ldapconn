@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from compat import print_function, to_bytes
 
 import os
 import sys
@@ -71,7 +72,7 @@ class LDAPConnTestCase(unittest.TestCase):
     def test_whoami(self):
         with self.app.test_request_context():
             self.assertEqual(self.ldap.whoami(),
-                             'dn:' + self.app.config['LDAP_BINDDN'])
+                             to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
 
 
 class LDAPConnAnonymousTestCase(LDAPConnTestCase):
@@ -122,17 +123,17 @@ if __name__ == '__main__':
         container = cli.create_container(image='rroemhild/test-openldap',
                                          ports=[389])
 
-        print 'Starting docker container {0}...'.format(container.get('Id'))
+        print('Starting docker container {0}...'.format(container.get('Id')))
         cli.start(container, privileged=True, port_bindings={389: 389})
 
-        print 'Wait 3 seconds until slapd is started...'
+        print('Wait 3 seconds until slapd is started...')
         time.sleep(3)
 
-        print 'Run unit test...'
+        print('Run unit test...')
         runner = unittest.main(exit=False)
         success = runner.result.wasSuccessful()
 
-        print 'Stop and removing container...'
+        print('Stop and removing container...')
         cli.remove_container(container, force=True)
     except (ImportError, ValueError):
         unittest.main()
