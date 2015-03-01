@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from ssl import CERT_REQUIRED, CERT_OPTIONAL, PROTOCOL_TLSv1
+from ssl import CERT_OPTIONAL, PROTOCOL_TLSv1
 from ldap3 import Server, Connection, Tls, AttrDef, ObjectDef, Reader
-from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
+from ldap3 import STRATEGY_SYNC, GET_ALL_INFO
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
-from ldap3 import ALL_ATTRIBUTES, DEREF_ALWAYS
 
 from flask import current_app
 

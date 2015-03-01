@@ -11,7 +11,6 @@ import flask
 import flask_ldapconn
 
 from ldap3 import SUBTREE
-from flask_ldapconn import LDAPConn
 
 
 DOCKER_RUN = os.environ.get('DOCKER_RUN', True)

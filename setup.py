@@ -7,7 +7,6 @@ Flask-LDAPConn
 Flask extension providing ldap3 connection object for accessing LDAP servers.
 '''
 
-import sys
 
 from setuptools import setup
 
