@@ -103,6 +103,30 @@ User model sample
             print u'Name: {}'.format(entry.name)
 
 
+Authentication sample
+---------------------
+
+.. code-block:: python
+
+    from flask import Flask
+    from flask_ldapconn import LDAPConn
+
+    app = Flask(__name__)
+    ldap_conn = LDAPConn(app)
+
+    username = 'user1'
+    password = 'userpass'
+    attribute = 'uid'
+    search_filter = ('(active=1)')
+
+    with app.app_context():
+        retval = ldap_conn.authenticate(username, password, attribute,
+                                        basedn, search_filter')
+        if not retval:
+            return 'Invalid credentials.'
+        return 'Welcome %s.' % username
+
+
 Unit Test
 ---------
 

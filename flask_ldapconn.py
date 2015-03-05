@@ -2,8 +2,9 @@
 
 from ssl import CERT_OPTIONAL, PROTOCOL_TLSv1
 from ldap3 import Server, Connection, Tls, AttrDef, ObjectDef, Reader
-from ldap3 import STRATEGY_SYNC, GET_ALL_INFO
+from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
+from ldap3 import LDAPBindError, LDAPInvalidFilterError
 
 from flask import current_app
 
@@ -103,7 +104,7 @@ class LDAPConn(object):
         else:
             app.teardown_request(self.teardown)
 
-    def connect(self):
+    def connect(self, user, password):
         auto_bind_strategy = AUTO_BIND_TLS_BEFORE_BIND
         if current_app.config['LDAP_USE_TLS'] is not True:
             auto_bind_strategy = AUTO_BIND_NO_TLS
@@ -112,8 +113,8 @@ class LDAPConn(object):
             self.ldap_server,
             auto_bind=auto_bind_strategy,
             client_strategy=STRATEGY_SYNC,
-            user=current_app.config['LDAP_BINDDN'],
-            password=current_app.config['LDAP_SECRET'],
+            user=user,
+            password=password,
             check_names=True
         )
 
@@ -126,11 +127,48 @@ class LDAPConn(object):
 
     @property
     def connection(self):
+        user = current_app.config['LDAP_BINDDN']
+        password = current_app.config['LDAP_SECRET']
+
         ctx = stack.top
         if ctx is not None:
             if not hasattr(ctx, 'ldap_conn'):
-                ctx.ldap_conn = self.connect()
+                ctx.ldap_conn = self.connect(user, password)
             return ctx.ldap_conn
+
+    def authenticate(self,
+                     username,
+                     password,
+                     attribute,
+                     basedn,
+                     search_filter=None,
+                     search_scope=SUBTREE):
+        '''Attempts to bind a user to the LDAP server.
+
+            :param username: The username to attempt to bind with.
+            :param password: The password of the username.
+            :param attribute: The LDAP attribute for the username.
+            :param basedn: The LDAP basedn to search on.
+            :param search_filter: LDAP searchfilter to attempt to search with.
+
+            :return: ``True`` if successful or ``False`` if the
+                credentials are invalid.
+        '''
+        user_filter = '({0}={1})'.format(attribute, username)
+        if search_filter is not None:
+            search_filter = '(&{0}{1})'.format(user_filter, search_filter)
+        else:
+            search_filter = user_filter
+
+        try:
+            self.connection.search(basedn, search_filter, search_scope,
+                                   attributes=[attribute])
+            response = self.connection.response
+            conn = self.connect(response[0]['dn'], password)
+            conn.unbind()
+            return True
+        except (LDAPBindError, LDAPInvalidFilterError, IndexError):
+            return False
 
     def result(self):
         return self.connection.result

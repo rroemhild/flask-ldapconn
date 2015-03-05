@@ -8,8 +8,8 @@ import time
 import unittest
 
 import flask
-import flask_ldapconn
 
+from flask_ldapconn import LDAPConn
 from ldap3 import SUBTREE
 
 
@@ -17,15 +17,21 @@ DOCKER_RUN = os.environ.get('DOCKER_RUN', True)
 DOCKER_URL = 'unix://var/run/docker.sock'
 
 TESTING = True
-EMAIL = 'fry@planetexpress.com'
+USER_EMAIL = 'fry@planetexpress.com'
+USER_PASSWORD = 'fry'
 LDAP_SERVER = 'localhost'
 LDAP_BINDDN = 'cn=admin,dc=planetexpress,dc=com'
 LDAP_SECRET = 'GoodNewsEveryone'
-LDAP_BASEDN = 'ou=people,dc=planetexpress,dc=com'
+LDAP_BASEDN = 'dc=planetexpress,dc=com'
 LDAP_SEARCH_ATTR = 'mail'
-LDAP_SEARCH_FILTER = '(mail=%s)' % EMAIL
-LDAP_QUERY_FILTER = 'email: %s' % EMAIL
+LDAP_SEARCH_FILTER = '(mail=%s)' % USER_EMAIL
+LDAP_QUERY_FILTER = 'email: %s' % USER_EMAIL
 LDAP_OBJECTCLASS = ['inetOrgPerson']
+
+
+LDAP_AUTH_BASEDN = 'ou=people,dc=planetexpress,dc=com'
+LDAP_AUTH_ATTR = 'mail'
+LDAP_AUTH_SEARCH_FILTER = '(objectClass=inetOrgPerson)'
 
 
 class LDAPConnTestCase(unittest.TestCase):
@@ -34,10 +40,13 @@ class LDAPConnTestCase(unittest.TestCase):
         app = flask.Flask(__name__)
         app.config.from_object(__name__)
         app.config.from_envvar('LDAP_SETTINGS', silent=True)
-        ldap = flask_ldapconn.LDAPConn(app)
+        ldap = LDAPConn(app)
 
         self.app = app
         self.ldap = ldap
+
+
+class LDAPConnSearchTestCase(LDAPConnTestCase):
 
     def test_connection_search(self):
         attr = self.app.config['LDAP_SEARCH_ATTR']
@@ -49,7 +58,15 @@ class LDAPConnTestCase(unittest.TestCase):
             response = self.ldap.response()
             self.assertTrue(response)
             self.assertEqual(response[0]['attributes'][attr][0],
-                             self.app.config['EMAIL'])
+                             self.app.config['USER_EMAIL'])
+
+    def test_whoami(self):
+        with self.app.test_request_context():
+            self.assertEqual(self.ldap.whoami(),
+                             to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
+
+
+class LDAPConnModelSearchTestCase(LDAPConnTestCase):
 
     def test_model_search(self):
         class User(self.ldap.BaseModel):
@@ -63,18 +80,69 @@ class LDAPConnTestCase(unittest.TestCase):
 
         with self.app.test_request_context():
             u = User()
-            entries = u.search('email: %s' % self.app.config['EMAIL'])
+            entries = u.search('email: %s' % self.app.config['USER_EMAIL'])
             for entry in entries:
                 self.assertEqual(entry.email.value,
-                                 self.app.config['EMAIL'])
+                                 self.app.config['USER_EMAIL'])
 
-    def test_whoami(self):
+
+class LDAPConnAuthTestCase(LDAPConnTestCase):
+
+    def test_authenticate_user(self):
         with self.app.test_request_context():
-            self.assertEqual(self.ldap.whoami(),
-                             to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
+            retval = self.ldap.authenticate(
+                username=self.app.config['USER_EMAIL'],
+                password=self.app.config['USER_PASSWORD'],
+                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                attribute=self.app.config['LDAP_SEARCH_ATTR'],
+            )
+            self.assertTrue(retval)
+
+    def test_authenticate_user_basedn_filter(self):
+        with self.app.test_request_context():
+            retval = self.ldap.authenticate(
+                username=self.app.config['USER_EMAIL'],
+                password=self.app.config['USER_PASSWORD'],
+                attribute=self.app.config['LDAP_SEARCH_ATTR'],
+                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                search_filter=self.app.config['LDAP_AUTH_SEARCH_FILTER']
+            )
+            self.assertTrue(retval)
+
+    def test_authenticate_user_invalid_credentials(self):
+        with self.app.test_request_context():
+            retval = self.ldap.authenticate(
+                username=self.app.config['USER_EMAIL'],
+                password='testpass',
+                attribute=self.app.config['LDAP_SEARCH_ATTR'],
+                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+            )
+            self.assertFalse(retval)
+
+    def test_authenticate_user_invalid_search_filter(self):
+        with self.app.test_request_context():
+            retval = self.ldap.authenticate(
+                username=self.app.config['USER_EMAIL'],
+                password='testpass',
+                attribute=self.app.config['LDAP_SEARCH_ATTR'],
+                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                search_filter='x=y'
+            )
+            self.assertFalse(retval)
+
+    def test_authenticate_user_search_filter_no_result(self):
+        with self.app.test_request_context():
+            retval = self.ldap.authenticate(
+                username=self.app.config['USER_EMAIL'],
+                password='testpass',
+                attribute=self.app.config['LDAP_SEARCH_ATTR'],
+                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                search_filter='(uidNumber=*)'
+            )
+            self.assertFalse(retval)
 
 
-class LDAPConnSSLTestCase(LDAPConnTestCase):
+class LDAPConnSSLTestCase(unittest.TestCase):
 
     def setUp(self):
         app = flask.Flask(__name__)
@@ -82,13 +150,18 @@ class LDAPConnSSLTestCase(LDAPConnTestCase):
         app.config.from_envvar('LDAP_SETTINGS', silent=True)
         app.config['LDAP_PORT'] = app.config.get('LDAP_SSL_PORT', 636)
         app.config['LDAP_USE_SSL'] = True
-        ldap = flask_ldapconn.LDAPConn(app)
+        ldap = LDAPConn(app)
 
         self.app = app
         self.ldap = ldap
 
+    def test_whoami(self):
+        with self.app.test_request_context():
+            self.assertEqual(self.ldap.whoami(),
+                             to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
 
-class LDAPConnAnonymousTestCase(LDAPConnTestCase):
+
+class LDAPConnAnonymousTestCase(unittest.TestCase):
 
     def setUp(self):
         app = flask.Flask(__name__)
@@ -96,7 +169,7 @@ class LDAPConnAnonymousTestCase(LDAPConnTestCase):
         app.config.from_envvar('LDAP_SETTINGS', silent=True)
         app.config['LDAP_BINDDN'] = None
         app.config['LDAP_SECRET'] = None
-        ldap = flask_ldapconn.LDAPConn(app)
+        ldap = LDAPConn(app)
 
         self.app = app
         self.ldap = ldap
@@ -115,7 +188,7 @@ class LDAPConnNoTLSAnonymousTestCase(unittest.TestCase):
         app.config['LDAP_BINDDN'] = None
         app.config['LDAP_SECRET'] = None
         app.config['LDAP_USE_TLS'] = False
-        ldap = flask_ldapconn.LDAPConn(app)
+        ldap = LDAPConn(app)
 
         self.app = app
         self.ldap = ldap

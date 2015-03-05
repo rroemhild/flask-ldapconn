@@ -1,6 +1,8 @@
 0.4-dev 2015-02-26
 ------------------
 
+- Add authentication method
+
 - v0.3.1: Return entries instead of Reader object in models
 - v0.3.2: BUGFIX: Allow unsecure connections
 - v0.3.3: Allow anonymous auth

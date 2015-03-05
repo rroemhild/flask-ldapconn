@@ -13,7 +13,7 @@ from setuptools import setup
 
 setup(
     name='Flask-LDAPConn',
-    version='0.3.4',
+    version='0.4-dev',
     url='http://github.com/rroemhild/flask-ldapconn',
     license='BSD',
     author='Rafael Römhild',
