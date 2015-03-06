@@ -59,7 +59,7 @@ Create the ldap instance within your application:
     from flask_ldapconn import LDAPConn
 
     app = Flask(__name__)
-    ldap_conn = LDAPConn(app)
+    ldap = LDAPConn(app)
 
 
 Client sample
@@ -72,16 +72,17 @@ Client sample
     from ldap3 import SUBTREE
 
     app = Flask(__name__)
-    ldap_conn = LDAPConn(app)
+    ldap = LDAPConn(app)
 
     @app.route('/')
     def index():
+        ldapc = ldap.connection
         basedn = 'ou=people,dc=example,dc=com'
         search_filter = '(objectClass=posixAccount)'
         attributes = ['sn', 'givenName', 'uid', 'mail']
-        ldap_conn.search(basedn, search_filter, SUBTREE,
-                         attributes=attributes)
-        response = ldap_conn.get_response()
+        ldapc.search(basedn, search_filter, SUBTREE,
+                     attributes=attributes)
+        response = ldapc.response
 
 
 User model sample
@@ -93,16 +94,16 @@ User model sample
     from flask_ldapconn import LDAPConn
 
     app = Flask(__name__)
-    ldap_conn = LDAPConn(app)
+    ldap = LDAPConn(app)
 
-    class User(ldap_conn.BaseModel):
+    class User(ldap.BaseModel):
 
         __basedn__ = 'ou=people,dc=example,dc=com'
         __objectclass__ = ['inetOrgPerson']
 
-        name = ldap_conn.BaseAttr('cn')
-        email = ldap_conn.BaseAttr('mail')
-        userid = ldap_conn.BaseAttr('uid')
+        name = ldap.BaseAttr('cn')
+        email = ldap.BaseAttr('mail')
+        userid = ldap.BaseAttr('uid')
 
     with app.app_context():
         u = User()
@@ -120,7 +121,7 @@ Authentication sample
     from flask_ldapconn import LDAPConn
 
     app = Flask(__name__)
-    ldap_conn = LDAPConn(app)
+    ldap = LDAPConn(app)
 
     username = 'user1'
     password = 'userpass'
@@ -128,8 +129,8 @@ Authentication sample
     search_filter = ('(active=1)')
 
     with app.app_context():
-        retval = ldap_conn.authenticate(username, password, attribute,
-                                        basedn, search_filter')
+        retval = ldap.authenticate(username, password, attribute,
+                                   basedn, search_filter')
         if not retval:
             return 'Invalid credentials.'
         return 'Welcome %s.' % username

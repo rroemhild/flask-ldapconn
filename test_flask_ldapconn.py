@@ -9,8 +9,8 @@ import unittest
 
 import flask
 
-from flask_ldapconn import LDAPConn
 from ldap3 import SUBTREE
+from flask_ldapconn import LDAPConn
 
 
 DOCKER_RUN = os.environ.get('DOCKER_RUN', True)
@@ -51,18 +51,20 @@ class LDAPConnSearchTestCase(LDAPConnTestCase):
     def test_connection_search(self):
         attr = self.app.config['LDAP_SEARCH_ATTR']
         with self.app.test_request_context():
-            self.ldap.search(self.app.config['LDAP_BASEDN'],
-                             self.app.config['LDAP_SEARCH_FILTER'],
-                             SUBTREE, attributes=[attr])
-            result = self.ldap.result()
-            response = self.ldap.response()
+            ldapc = self.ldap.connection
+            ldapc.search(self.app.config['LDAP_BASEDN'],
+                         self.app.config['LDAP_SEARCH_FILTER'],
+                         SUBTREE, attributes=[attr])
+            result = ldapc.result
+            response = ldapc.response
             self.assertTrue(response)
             self.assertEqual(response[0]['attributes'][attr][0],
                              self.app.config['USER_EMAIL'])
 
     def test_whoami(self):
         with self.app.test_request_context():
-            self.assertEqual(self.ldap.whoami(),
+            conn = self.ldap.connection
+            self.assertEqual(conn.extend.standard.who_am_i(),
                              to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
 
 
@@ -123,7 +125,7 @@ class LDAPConnAuthTestCase(LDAPConnTestCase):
         with self.app.test_request_context():
             retval = self.ldap.authenticate(
                 username=self.app.config['USER_EMAIL'],
-                password='testpass',
+                password=self.app.config['USER_PASSWORD'],
                 attribute=self.app.config['LDAP_SEARCH_ATTR'],
                 basedn=self.app.config['LDAP_AUTH_BASEDN'],
                 search_filter='x=y'
@@ -134,7 +136,7 @@ class LDAPConnAuthTestCase(LDAPConnTestCase):
         with self.app.test_request_context():
             retval = self.ldap.authenticate(
                 username=self.app.config['USER_EMAIL'],
-                password='testpass',
+                password=self.app.config['USER_PASSWORD'],
                 attribute=self.app.config['LDAP_SEARCH_ATTR'],
                 basedn=self.app.config['LDAP_AUTH_BASEDN'],
                 search_filter='(uidNumber=*)'
@@ -157,7 +159,8 @@ class LDAPConnSSLTestCase(unittest.TestCase):
 
     def test_whoami(self):
         with self.app.test_request_context():
-            self.assertEqual(self.ldap.whoami(),
+            conn = self.ldap.connection
+            self.assertEqual(conn.extend.standard.who_am_i(),
                              to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
 
 
@@ -176,7 +179,8 @@ class LDAPConnAnonymousTestCase(unittest.TestCase):
 
     def test_whoami(self):
         with self.app.test_request_context():
-            self.assertEqual(self.ldap.whoami(), None)
+            conn = self.ldap.connection
+            self.assertEqual(conn.extend.standard.who_am_i(), None)
 
 
 class LDAPConnNoTLSAnonymousTestCase(unittest.TestCase):
@@ -195,7 +199,28 @@ class LDAPConnNoTLSAnonymousTestCase(unittest.TestCase):
 
     def test_whoami(self):
         with self.app.test_request_context():
-            self.assertEqual(self.ldap.whoami(), None)
+            conn = self.ldap.connection
+            self.assertEqual(conn.extend.standard.who_am_i(), None)
+
+
+class LDAPConnDeprecatedTestCAse(LDAPConnTestCase):
+
+    def test_connection_search(self):
+        attr = self.app.config['LDAP_SEARCH_ATTR']
+        with self.app.test_request_context():
+            self.ldap.search(self.app.config['LDAP_BASEDN'],
+                             self.app.config['LDAP_SEARCH_FILTER'],
+                             SUBTREE, attributes=[attr])
+            result = self.ldap.result()
+            response = self.ldap.response()
+            self.assertTrue(response)
+            self.assertEqual(response[0]['attributes'][attr][0],
+                             self.app.config['USER_EMAIL'])
+
+    def test_whoami_dep_deprecated(self):
+        with self.app.test_request_context():
+            self.assertEqual(self.ldap.whoami(),
+                             to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
 
 
 if __name__ == '__main__':

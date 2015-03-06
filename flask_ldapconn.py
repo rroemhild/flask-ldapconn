@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from ssl import CERT_OPTIONAL, PROTOCOL_TLSv1
-from ldap3 import Server, Connection, Tls, AttrDef, ObjectDef, Reader
+from ldap3 import Server, Connection, Tls
+from ldap3 import AttrDef, ObjectDef, Reader
+from ldap3 import LDAPBindError, LDAPInvalidFilterError
 from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
-from ldap3 import LDAPBindError, LDAPInvalidFilterError
 
 from flask import current_app
 
@@ -37,9 +38,8 @@ class LDAPBaseModel(ObjectDef):
 
     def search(self, query):
         app = current_app._get_current_object()
-        ldap_conn = app.extensions.get('ldap_conn')
-        model_reader = Reader(ldap_conn.connection, self,
-                              query, self.__basedn__)
+        ldapc = app.extensions.get('ldap_conn').connection
+        model_reader = Reader(ldapc, self, query, self.__basedn__)
         model_reader.search()
         return model_reader.entries
 
@@ -170,14 +170,30 @@ class LDAPConn(object):
         except (LDAPBindError, LDAPInvalidFilterError, IndexError):
             return False
 
+    def whoami(self):
+        '''Deprecated
+
+        Use LDAPConn.connection.extend.standard.who_am_i()
+        '''
+        return self.connection.extend.standard.who_am_i()
+
     def result(self):
+        '''Deprecated
+
+        Use LDAPConn.connection.result
+        '''
         return self.connection.result
 
     def response(self):
+        '''Deprecated
+
+        Use LDAPConn.connection.response
+        '''
         return self.connection.response
 
     def search(self, *args, **kwargs):
-        return self.connection.search(*args, **kwargs)
+        '''Deprecated
 
-    def whoami(self):
-        return self.connection.extend.standard.who_am_i()
+        Use LDAPConn.connection.search()
+        '''
+        return self.connection.search(*args, **kwargs)
