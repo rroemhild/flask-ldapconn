@@ -28,8 +28,8 @@ setup(
     zip_safe=False,
     platforms='any',
     install_requires=[
-        'Flask>=0.9',
-        'ldap3>=0.9.7.5'
+        'Flask==0.10.1',
+        'ldap3==0.9.7.10'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

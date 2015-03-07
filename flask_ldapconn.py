@@ -8,15 +8,9 @@ from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
 
 from flask import current_app
-
+from flask import _app_ctx_stack as stack
 
 __all__ = ('LDAPConn',)
-
-
-try:
-    from flask import _app_ctx_stack as stack
-except ImportError:
-    from flask import _request_ctx_stack as stack
 
 
 class LDAPBaseModel(ObjectDef):
@@ -99,10 +93,8 @@ class LDAPConn(object):
         # Store ldap_conn object to extensions
         app.extensions['ldap_conn'] = self
 
-        if hasattr(app, 'teardown_appcontext'):
-            app.teardown_appcontext(self.teardown)
-        else:
-            app.teardown_request(self.teardown)
+        # Teardown appcontext
+        app.teardown_appcontext(self.teardown)
 
     def connect(self, user, password):
         auto_bind_strategy = AUTO_BIND_TLS_BEFORE_BIND
