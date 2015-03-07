@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-
 from ssl import CERT_OPTIONAL, PROTOCOL_TLSv1
 from ldap3 import Server, Connection, Tls
-from ldap3 import AttrDef, ObjectDef, Reader
 from ldap3 import LDAPBindError, LDAPInvalidFilterError
 from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
@@ -10,64 +8,25 @@ from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
 from flask import current_app
 from flask import _app_ctx_stack as stack
 
+from .models import LDAPModel
+from .attributes import LDAPAttribute
+
+
 __all__ = ('LDAPConn',)
-
-
-class LDAPBaseModel(ObjectDef):
-
-    __basedn__ = None
-    __objectclass__ = ['top']
-
-    def __init__(self):
-        super(LDAPBaseModel, self).__init__(self.__objectclass__)
-        self._build_attrdef()
-
-    def _build_attrdef(self):
-        for attr in dir(self):
-            value = getattr(self, attr)
-            if not isinstance(value, LDAPBaseAttr):
-                continue
-            attribute = AttrDef(value['name'], attr)
-            self.add(attribute)
-
-    def search(self, query):
-        app = current_app._get_current_object()
-        ldapc = app.extensions.get('ldap_conn').connection
-        model_reader = Reader(ldapc, self, query, self.__basedn__)
-        model_reader.search()
-        return model_reader.entries
-
-
-class LDAPBaseAttr(object):
-    def __init__(self,
-                 name,
-                 validate=None,
-                 pre_query=None,
-                 post_query=None,
-                 default=None,
-                 dereference_dn=None):
-        self.name = name
-        self.validate = validate
-        self.pre_query = pre_query
-        self.post_query = post_query
-        self.default = default
-        self.dereference_dn = dereference_dn
-
-    def __getitem__(self, attr):
-        return self.__dict__[attr]
 
 
 class LDAPConn(object):
 
     def __init__(self, app=None):
-        self.app = app
+
+        self.Model = LDAPModel
+        self.Attribute = LDAPAttribute
+
         if app is not None:
             self.init_app(app)
 
-        self.BaseModel = LDAPBaseModel
-        self.BaseAttr = LDAPBaseAttr
-
     def init_app(self, app):
+
         # Default config
         app.config.setdefault('LDAP_SERVER', 'localhost')
         app.config.setdefault('LDAP_PORT', 389)

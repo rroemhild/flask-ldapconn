@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from compat import print_function, to_bytes
-
 import os
 import sys
 import time
@@ -11,6 +9,7 @@ import flask
 
 from ldap3 import SUBTREE
 from flask_ldapconn import LDAPConn
+from flask_ldapconn.compat import print_function, to_bytes
 
 
 DOCKER_RUN = os.environ.get('DOCKER_RUN', True)
@@ -68,24 +67,47 @@ class LDAPConnSearchTestCase(LDAPConnTestCase):
                              to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
 
 
-class LDAPConnModelSearchTestCase(LDAPConnTestCase):
+class LDAPConnModelSearchTestCase(unittest.TestCase):
+
+    def setUp(self):
+        app = flask.Flask(__name__)
+        app.config.from_object(__name__)
+        app.config.from_envvar('LDAP_SETTINGS', silent=True)
+        ldap = LDAPConn(app)
+
+        self.app = app
+        self.ldap = ldap
+
+        class User(self.ldap.Model):
+            # LDAP meta-data
+            base_dn = self.app.config['LDAP_BASEDN']
+            object_classes = self.app.config['LDAP_OBJECTCLASS']
+
+            # inetOrgPerson
+            name = self.ldap.Attribute('cn')
+            email = self.ldap.Attribute('mail')
+            userid = self.ldap.Attribute('uid')
+
+        self.user = User
 
     def test_model_search(self):
-        class User(self.ldap.BaseModel):
-
-            __basedn__ = self.app.config['LDAP_BASEDN']
-            __objectclass__ = self.app.config['LDAP_OBJECTCLASS']
-
-            name = self.ldap.BaseAttr('cn')
-            userid = self.ldap.BaseAttr('uid')
-            email = self.ldap.BaseAttr('mail')
-
         with self.app.test_request_context():
-            u = User()
-            entries = u.search('email: %s' % self.app.config['USER_EMAIL'])
+            entries = self.user.search(
+                'email: %s' % self.app.config['USER_EMAIL']
+            )
             for entry in entries:
                 self.assertEqual(entry.email.value,
                                  self.app.config['USER_EMAIL'])
+
+    def test_model_search_set_attribute(self):
+        new_email = 'philip@planetexpress.com'
+        with self.app.test_request_context():
+            entries = self.user.search(
+                'email: %s' % self.app.config['USER_EMAIL']
+            )
+            entry = entries[0]
+            entry.email = new_email
+            self.assertEqual(entry.email.value, new_email)
 
 
 class LDAPConnAuthTestCase(LDAPConnTestCase):
@@ -211,7 +233,6 @@ class LDAPConnDeprecatedTestCAse(LDAPConnTestCase):
             self.ldap.search(self.app.config['LDAP_BASEDN'],
                              self.app.config['LDAP_SEARCH_FILTER'],
                              SUBTREE, attributes=[attr])
-            result = self.ldap.result()
             response = self.ldap.response()
             self.assertTrue(response)
             self.assertEqual(response[0]['attributes'][attr][0],
