@@ -67,7 +67,7 @@ class LDAPConnSearchTestCase(LDAPConnTestCase):
                              to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
 
 
-class LDAPConnModelSearchTestCase(unittest.TestCase):
+class LDAPConnModelTestCase(unittest.TestCase):
 
     def setUp(self):
         app = flask.Flask(__name__)
@@ -108,6 +108,34 @@ class LDAPConnModelSearchTestCase(unittest.TestCase):
             entry = entries[0]
             entry.email = new_email
             self.assertEqual(entry.email.value, new_email)
+
+    def test_model_search_set_attribute_list(self):
+        new_email_list = ['philip@planetexpress.com',
+                          'a.fry@planetexpress.com']
+        with self.app.test_request_context():
+            entries = self.user.search(
+                'email: %s' % self.app.config['USER_EMAIL']
+            )
+            entry = entries[0]
+            entry.email = new_email_list
+            self.assertEqual(entry.email.value, new_email_list)
+
+    def test_model_search_set_readonly_attr(self):
+        with self.app.test_request_context():
+            with self.assertRaises(Exception) as context:
+                entries = self.user.search(
+                    'email: %s' % self.app.config['USER_EMAIL']
+                    )
+                entry = entries[0]
+                entry.email.key = 'readonly'
+            self.assertTrue('attribute is read only' in context.exception)
+
+    def test_model_new(self):
+        with self.app.test_request_context():
+            user = self.user()
+            user.name = 'Rafael'
+            user.email = 'rafael@planetexpress.com'
+            self.assertEqual(user.email.value, 'rafael@planetexpress.com')
 
 
 class LDAPConnAuthTestCase(LDAPConnTestCase):
@@ -233,6 +261,7 @@ class LDAPConnDeprecatedTestCAse(LDAPConnTestCase):
             self.ldap.search(self.app.config['LDAP_BASEDN'],
                              self.app.config['LDAP_SEARCH_FILTER'],
                              SUBTREE, attributes=[attr])
+            result = self.ldap.result()
             response = self.ldap.response()
             self.assertTrue(response)
             self.assertEqual(response[0]['attributes'][attr][0],
