@@ -120,15 +120,12 @@ class LDAPConnModelTestCase(unittest.TestCase):
             entry.email = new_email_list
             self.assertEqual(entry.email.value, new_email_list)
 
-    def test_model_search_set_readonly_attr(self):
+    def test_model_search_set_undefined_attr(self):
+        def new_model():
+            user = self.user()
+            user.active = '1'
         with self.app.test_request_context():
-            with self.assertRaises(Exception) as context:
-                entries = self.user.search(
-                    'email: %s' % self.app.config['USER_EMAIL']
-                    )
-                entry = entries[0]
-                entry.email.key = 'readonly'
-            self.assertTrue('attribute is read only' in context.exception)
+            self.assertRaises(KeyError, new_model)
 
     def test_model_new(self):
         with self.app.test_request_context():
