@@ -36,9 +36,6 @@ class LDAPModel(Entry):
                 new_attr.value = attr.value
                 self.__dict__['_attributes'][attr.key] = new_attr
 
-    def __setitem__(self, item, value):
-        self.__setattr__(item, value)
-
     def __setattr__(self, item, value):
         self._attributes[item].value = value
 

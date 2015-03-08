@@ -34,7 +34,7 @@ class LDAPAttribute(Attribute):
 
     def __setattr__(self, item, value):
         if item == 'value':
-            if len(value) == 1:
+            if isinstance(value, str):
                 self.__dict__['values'] = [value]
             else:
                 self.__dict__['values'] = value
