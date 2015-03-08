@@ -96,18 +96,17 @@ User model sample
     app = Flask(__name__)
     ldap = LDAPConn(app)
 
-    class User(ldap.BaseModel):
+    class User(ldap.Model):
 
-        __basedn__ = 'ou=people,dc=example,dc=com'
-        __objectclass__ = ['inetOrgPerson']
+        base_dn = 'ou=people,dc=example,dc=com'
+        object_classes = ['inetOrgPerson']
 
-        name = ldap.BaseAttr('cn')
-        email = ldap.BaseAttr('mail')
-        userid = ldap.BaseAttr('uid')
+        name = ldap.Attribute('cn')
+        email = ldap.Attribute('mail')
+        userid = ldap.Attribute('uid')
 
     with app.app_context():
-        u = User()
-        entries = u.search('email: @example.com')
+        entries = User.search('email: @example.com')
         for entry in entries:
             print u'Name: {}'.format(entry.name)
 
