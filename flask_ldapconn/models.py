@@ -49,6 +49,40 @@ class LDAPModel(Entry):
         '''
         pass
 
+    def authenticate(self, password):
+        '''Authenticate a user with an LDAPModel class
+
+        Args:
+            password (str): The user password.
+
+        '''
+        app = current_app._get_current_object()
+        ldapc = app.extensions.get('ldap_conn')
+        return ldapc.authenticate(self.entry_get_dn(), password)
+
+    @classmethod
+    def fetch(self, attribute, value, search_filter=None):
+        '''Return the first entry from a attribute=value search
+
+        Args:
+            attribute (str): Perfom search with attribute.
+            value (str): The value in attribute.
+            query (str): Standard LDAP filter.
+
+        Return:
+            entry (LDAPConn.LDAPModel): The first entry from the search
+                response or None.
+        '''
+        query = '({0}={1})'.format(attribute, value)
+        if search_filter is not None:
+            query = '(&{0}{1})'.format(query, search_filter)
+
+        try:
+            entries = self.search(query)
+            return entries[0]
+        except IndexError:
+            return None
+
     @classmethod
     def search(cls, query):
         '''Perform searches with a ldap3.Reader instance
@@ -65,8 +99,8 @@ class LDAPModel(Entry):
         object_def = cls.get_abstract_object_def()
 
         app = current_app._get_current_object()
-        ldapc = app.extensions.get('ldap_conn').connection
-        reader = Reader(connection=ldapc,
+        ldapc = app.extensions.get('ldap_conn')
+        reader = Reader(connection=ldapc.connection,
                         object_def=object_def,
                         query=query,
                         base=base_dn,

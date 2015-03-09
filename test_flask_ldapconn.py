@@ -134,6 +134,25 @@ class LDAPConnModelTestCase(unittest.TestCase):
             user.email = 'rafael@planetexpress.com'
             self.assertEqual(user.email.value, 'rafael@planetexpress.com')
 
+    def test_model_fetch_entry(self):
+        uid = 'bender'
+        with self.app.test_request_context():
+            user = self.user.fetch('uid', uid)
+            self.assertEqual(user.userid.value, uid)
+
+    def test_model_fetch_entry_authenticate(self):
+        uid = 'fry'
+        with self.app.test_request_context():
+            user = self.user.fetch('uid', uid)
+            password=self.app.config['USER_PASSWORD']
+            self.assertTrue(user.authenticate(password))
+
+    def test_model_fetch_entry_exception(self):
+        uid = 'xyz'
+        with self.app.test_request_context():
+            user = self.user.fetch('uid', uid)
+            self.assertEqual(user, None)
+
 
 class LDAPConnAuthTestCase(LDAPConnTestCase):
 
@@ -142,8 +161,17 @@ class LDAPConnAuthTestCase(LDAPConnTestCase):
             retval = self.ldap.authenticate(
                 username=self.app.config['USER_EMAIL'],
                 password=self.app.config['USER_PASSWORD'],
-                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                base_dn=self.app.config['LDAP_AUTH_BASEDN'],
                 attribute=self.app.config['LDAP_SEARCH_ATTR'],
+            )
+            self.assertTrue(retval)
+
+    def test_authenticate_user_with_dn(self):
+        dn = 'cn=Philip J. Fry,ou=people,dc=planetexpress,dc=com'
+        with self.app.test_request_context():
+            retval = self.ldap.authenticate(
+                username=dn,
+                password=self.app.config['USER_PASSWORD'],
             )
             self.assertTrue(retval)
 
@@ -153,7 +181,7 @@ class LDAPConnAuthTestCase(LDAPConnTestCase):
                 username=self.app.config['USER_EMAIL'],
                 password=self.app.config['USER_PASSWORD'],
                 attribute=self.app.config['LDAP_SEARCH_ATTR'],
-                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                base_dn=self.app.config['LDAP_AUTH_BASEDN'],
                 search_filter=self.app.config['LDAP_AUTH_SEARCH_FILTER']
             )
             self.assertTrue(retval)
@@ -164,7 +192,7 @@ class LDAPConnAuthTestCase(LDAPConnTestCase):
                 username=self.app.config['USER_EMAIL'],
                 password='testpass',
                 attribute=self.app.config['LDAP_SEARCH_ATTR'],
-                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                base_dn=self.app.config['LDAP_AUTH_BASEDN'],
             )
             self.assertFalse(retval)
 
@@ -174,7 +202,7 @@ class LDAPConnAuthTestCase(LDAPConnTestCase):
                 username=self.app.config['USER_EMAIL'],
                 password=self.app.config['USER_PASSWORD'],
                 attribute=self.app.config['LDAP_SEARCH_ATTR'],
-                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                base_dn=self.app.config['LDAP_AUTH_BASEDN'],
                 search_filter='x=y'
             )
             self.assertFalse(retval)
@@ -185,7 +213,7 @@ class LDAPConnAuthTestCase(LDAPConnTestCase):
                 username=self.app.config['USER_EMAIL'],
                 password=self.app.config['USER_PASSWORD'],
                 attribute=self.app.config['LDAP_SEARCH_ATTR'],
-                basedn=self.app.config['LDAP_AUTH_BASEDN'],
+                base_dn=self.app.config['LDAP_AUTH_BASEDN'],
                 search_filter='(uidNumber=*)'
             )
             self.assertFalse(retval)

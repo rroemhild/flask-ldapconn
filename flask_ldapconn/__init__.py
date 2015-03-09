@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from ssl import CERT_OPTIONAL, PROTOCOL_TLSv1
 from ldap3 import Server, Connection, Tls
-from ldap3 import LDAPBindError, LDAPInvalidFilterError
 from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
+from ldap3 import LDAPBindError, LDAPInvalidFilterError, LDAPInvalidDnError
+from ldap3.utils.dn import split_ava
 
 from flask import current_app
 from flask import _app_ctx_stack as stack
@@ -90,35 +91,44 @@ class LDAPConn(object):
     def authenticate(self,
                      username,
                      password,
-                     attribute,
-                     basedn,
+                     attribute=None,
+                     base_dn=None,
                      search_filter=None,
                      search_scope=SUBTREE):
         '''Attempts to bind a user to the LDAP server.
 
-            :param username: The username to attempt to bind with.
-            :param password: The password of the username.
-            :param attribute: The LDAP attribute for the username.
-            :param basedn: The LDAP basedn to search on.
-            :param search_filter: LDAP searchfilter to attempt to search with.
+        Args:
+            username (str): DN or the username to attempt to bind with.
+            password (str): The password of the username.
+            attribute (str): The LDAP attribute for the username.
+            base_dn (str): The LDAP basedn to search on.
+            search_filter (str): LDAP searchfilter to attempt the user
+                search with.
 
-            :return: ``True`` if successful or ``False`` if the
+        Returns:
+            bool: ``True`` if successful or ``False`` if the
                 credentials are invalid.
         '''
-        user_filter = '({0}={1})'.format(attribute, username)
-        if search_filter is not None:
-            search_filter = '(&{0}{1})'.format(user_filter, search_filter)
-        else:
-            search_filter = user_filter
+        # If the username is no valid DN we can bind with, we nee to find
+        # the user first.
+        if not split_ava(username)[0]:
+            user_filter = '({0}={1})'.format(attribute, username)
+            if search_filter is not None:
+                user_filter = '(&{0}{1})'.format(user_filter, search_filter)
+
+            try:
+                self.connection.search(base_dn, user_filter, search_scope,
+                                       attributes=[attribute])
+                response = self.connection.response
+                username = response[0]['dn']
+            except (LDAPInvalidDnError, LDAPInvalidFilterError, IndexError):
+                return False
 
         try:
-            self.connection.search(basedn, search_filter, search_scope,
-                                   attributes=[attribute])
-            response = self.connection.response
-            conn = self.connect(response[0]['dn'], password)
+            conn = self.connect(username, password)
             conn.unbind()
             return True
-        except (LDAPBindError, LDAPInvalidFilterError, IndexError):
+        except LDAPBindError:
             return False
 
     def whoami(self):
