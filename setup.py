@@ -21,10 +21,9 @@ setup(
     keywords='flask ldap ldap3',
     description='Pure python, LDAP connection and model for Flask Applications',
     long_description=open('README.rst').read(),
-    py_modules=[
+    packages=[
         'flask_ldapconn'
     ],
-    package_data={'': ['LICENSE']},
     zip_safe=False,
     platforms='any',
     install_requires=[

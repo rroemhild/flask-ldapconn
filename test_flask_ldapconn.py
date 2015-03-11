@@ -292,7 +292,7 @@ class LDAPConnDeprecatedTestCAse(LDAPConnTestCase):
             self.assertEqual(response[0]['attributes'][attr][0],
                              self.app.config['USER_EMAIL'])
 
-    def test_whoami_dep_deprecated(self):
+    def test_whoami_deprecated(self):
         with self.app.test_request_context():
             self.assertEqual(self.ldap.whoami(),
                              to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
