@@ -1,3 +1,10 @@
+0.5.1 2015-03-11
+----------------
+
+- Fixed installer problem. Handle flask-ldapconn as package.
+
+- Refactored the LDAPModel class
+
 0.5 2015-03-07
 --------------
 
