@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import current_app
 from ldap3 import AttrDef, ObjectDef, Reader, SUBTREE, Entry
+from ldap3 import LDAPAttributeError
 
 from .attributes import LDAPAttribute
 
@@ -19,25 +20,23 @@ class LDAPModel(Entry):
     search_scope = SUBTREE
     object_classes = ['top']
 
-    def __init__(self, entry=None):
-        super(LDAPModel, self).__init__(dn=None, reader=None)
-        if entry is None:
-            for key in dir(self):
-                attr = getattr(self, key)
-                if not isinstance(attr, LDAPAttribute):
-                    continue
-                self.__dict__['_attributes'][key] = attr
-        else:
-            self.__dict__['_dn'] = entry.entry_get_dn()
-            self.__dict__['_raw_attributes'] = entry._raw_attributes
-            for attr in entry:
-                attr_def = getattr(attr, 'definition')
-                new_attr = LDAPAttribute(attr.key, attr_def=attr_def)
-                new_attr.value = attr.value
-                self.__dict__['_attributes'][attr.key] = new_attr
+    def __init__(self, dn=None, raw_attributes=None, **kwargs):
+        super(LDAPModel, self).__init__(dn=dn, reader=None)
+        self.__dict__['_raw_attributes'] = raw_attributes
 
-    def __setattr__(self, item, value):
-        self._attributes[item].value = value
+        # init attributes
+        for key in dir(self):
+            attr = getattr(self, key)
+            if not isinstance(attr, LDAPAttribute):
+                continue
+            self.__dict__['_attributes'][key] = attr
+
+        # set attributes data
+        for key, value in kwargs.items():
+            self[key].value = value
+
+    def __setattr__(self, key, value):
+        self[key].value = value
 
     def delete(self):
         '''Delete this entry from LDAP server
@@ -110,7 +109,10 @@ class LDAPModel(Entry):
                         controls=None)
         reader.search()
         for entry in reader.entries:
-            entries.append(LDAPModel(entry))
+            entries.append(cls(
+                           dn=entry.entry_get_dn(),
+                           raw_attributes=entry.entry_get_raw_attributes(),
+                           **entry.entry_get_attributes_dict()))
         return entries
 
     @classmethod
@@ -120,14 +122,6 @@ class LDAPModel(Entry):
             attr = getattr(cls, key)
             if not isinstance(attr, LDAPAttribute):
                 continue
-            attr_def = AttrDef(
-                name=attr.name,
-                key=key,
-                validate=attr.validate,
-                pre_query=attr.pre_query,
-                post_query=attr.post_query,
-                default=attr.default,
-                dereference_dn=attr.dereference_dn,
-            )
+            attr_def = attr.get_abstract_attr_def(key)
             object_def.add(attr_def)
         return object_def

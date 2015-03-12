@@ -7,7 +7,7 @@ import unittest
 
 import flask
 
-from ldap3 import SUBTREE
+from ldap3 import SUBTREE, LDAPKeyError
 from flask_ldapconn import LDAPConn
 from flask_ldapconn.compat import print_function, to_bytes
 
@@ -122,16 +122,14 @@ class LDAPConnModelTestCase(unittest.TestCase):
 
     def test_model_search_set_undefined_attr(self):
         def new_model():
-            user = self.user()
-            user.active = '1'
+            user = self.user(active='1')
         with self.app.test_request_context():
-            self.assertRaises(KeyError, new_model)
+            self.assertRaises(LDAPKeyError, new_model)
 
     def test_model_new(self):
         with self.app.test_request_context():
-            user = self.user()
-            user.name = 'Rafael'
-            user.email = 'rafael@planetexpress.com'
+            user = self.user(name='Rafael',
+                             email='rafael@planetexpress.com')
             self.assertEqual(user.email.value, 'rafael@planetexpress.com')
 
     def test_model_fetch_entry(self):
@@ -144,7 +142,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         uid = 'fry'
         with self.app.test_request_context():
             user = self.user.fetch('uid', uid)
-            password=self.app.config['USER_PASSWORD']
+            password = self.app.config['USER_PASSWORD']
             self.assertTrue(user.authenticate(password))
 
     def test_model_fetch_entry_exception(self):

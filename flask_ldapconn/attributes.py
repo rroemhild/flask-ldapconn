@@ -27,10 +27,7 @@ class LDAPAttribute(Attribute):
         self.__dict__['default'] = default
         self.__dict__['dereference_dn'] = dereference_dn
 
-        if attr_def is None:
-            super(LDAPAttribute, self).__init__(AttrDef(name), None)
-        else:
-            super(LDAPAttribute, self).__init__(attr_def, None)
+        super(LDAPAttribute, self).__init__(AttrDef(name), None)
 
     def __setattr__(self, item, value):
         if item == 'value':
@@ -40,3 +37,12 @@ class LDAPAttribute(Attribute):
                 self.__dict__['values'] = value
         else:
             raise LDAPAttributeError('attribute is read only')
+
+    def get_abstract_attr_def(self, key):
+        return AttrDef(name=self.name,
+                       key=key,
+                       validate=self.validate,
+                       pre_query=self.pre_query,
+                       post_query=self.post_query,
+                       default=self.default,
+                       dereference_dn=self.dereference_dn)
