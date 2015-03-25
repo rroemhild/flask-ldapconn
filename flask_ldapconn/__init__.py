@@ -9,7 +9,7 @@ from ldap3.utils.dn import split_ava
 from flask import current_app
 from flask import _app_ctx_stack as stack
 
-from .models import LDAPModel
+from .models import LDAPEntry
 from .attributes import LDAPAttribute
 
 
@@ -20,8 +20,10 @@ class LDAPConn(object):
 
     def __init__(self, app=None):
 
-        self.Model = LDAPModel
+        self.Entry = LDAPEntry
         self.Attribute = LDAPAttribute
+
+        self.Model = self.Entry
 
         if app is not None:
             self.init_app(app)

@@ -7,7 +7,7 @@ import unittest
 
 import flask
 
-from ldap3 import SUBTREE, LDAPKeyError
+from ldap3 import SUBTREE, LDAPEntryError
 from flask_ldapconn import LDAPConn
 from flask_ldapconn.compat import print_function, to_bytes
 
@@ -78,7 +78,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         self.app = app
         self.ldap = ldap
 
-        class User(self.ldap.Model):
+        class User(self.ldap.Entry):
             # LDAP meta-data
             base_dn = self.app.config['LDAP_BASEDN']
             object_classes = self.app.config['LDAP_OBJECTCLASS']
@@ -124,7 +124,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         def new_model():
             user = self.user(active='1')
         with self.app.test_request_context():
-            self.assertRaises(LDAPKeyError, new_model)
+            self.assertRaises(LDAPEntryError, new_model)
 
     def test_model_new(self):
         with self.app.test_request_context():

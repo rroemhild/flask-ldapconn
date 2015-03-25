@@ -1,42 +1,76 @@
 # -*- coding: utf-8 -*-
+import json
+
+from six import add_metaclass
+from copy import deepcopy
 from flask import current_app
-from ldap3 import AttrDef, ObjectDef, Reader, SUBTREE, Entry
-from ldap3 import LDAPAttributeError
+from ldap3 import LDAPEntryError
+from ldap3 import ObjectDef, Reader
+from ldap3 import SUBTREE, STRING_TYPES
+from ldap3.utils.conv import check_json_dict, format_json
 
 from .attributes import LDAPAttribute
 
 
-__all__ = ('LDAPModel',)
+__all__ = ('LDAPEntry',)
 
 
-class LDAPModel(Entry):
-    '''Base class for all LDAP models
-
-    Args:
-        entry (ldap3.Entry): An Entry object from Reader search result.
-    '''
+class LDAPEntryMeta(type):
 
     base_dn = None
     search_scope = SUBTREE
     object_classes = ['top']
 
-    def __init__(self, dn=None, raw_attributes=None, **kwargs):
-        super(LDAPModel, self).__init__(dn=dn, reader=None)
-        self.__dict__['_raw_attributes'] = raw_attributes
+    def __init__(cls, name, bases, ns):
+        cls._attributes = dict()
+        cls._object_def = ObjectDef(cls.object_classes)
 
-        # init attributes
-        for key in dir(self):
-            attr = getattr(self, key)
-            if not isinstance(attr, LDAPAttribute):
-                continue
-            self.__dict__['_attributes'][key] = attr
+        # loop through the namespace looking for LDAPAttribute instances
+        for key, value in ns.items():
+            if isinstance(value, LDAPAttribute):
+                cls._attributes[key] = value
+                attr_def = value.get_abstract_attr_def(key)
+                cls._object_def.add(attr_def)
 
-        # set attributes data
+    def get_new_class(cls):
+        class_dict = deepcopy(cls()._attributes)
+        new_cls = type(cls.__name__, (LDAPEntry,), class_dict)
+        return new_cls
+
+
+@add_metaclass(LDAPEntryMeta)
+class LDAPEntry(object):
+
+    def __init__(self, dn=None, **kwargs):
+        self.__dict__['_dn'] = dn
+
         for key, value in kwargs.items():
-            self[key].value = value
+            setattr(self, key, value)
+
+    def __getitem__(self, item):
+        return self.__getattr__(item)
+
+    def __getattr__(self, item):
+        if item not in self._attributes:
+            raise LDAPEntryError('attribute not found')
+
+        return getattr(self._attributes, item)
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
 
     def __setattr__(self, key, value):
-        self[key].value = value
+        if key not in self._attributes:
+            raise LDAPEntryError('attribute not found')
+
+        if isinstance(value, STRING_TYPES):
+            value = [value]
+
+        self._attributes[key].value = value
+
+    @property
+    def dn(self):
+        return self._dn
 
     def delete(self):
         '''Delete this entry from LDAP server
@@ -57,7 +91,7 @@ class LDAPModel(Entry):
         '''
         app = current_app._get_current_object()
         ldapc = app.extensions.get('ldap_conn')
-        return ldapc.authenticate(self.entry_get_dn(), password)
+        return ldapc.authenticate(self.dn, password)
 
     @classmethod
     def fetch(self, attribute, value, search_filter=None):
@@ -95,7 +129,7 @@ class LDAPModel(Entry):
         entries = []
         base_dn = getattr(cls, 'base_dn')
         search_scope = getattr(cls, 'search_scope')
-        object_def = cls.get_abstract_object_def()
+        object_def = getattr(cls, '_object_def')
 
         app = current_app._get_current_object()
         ldapc = app.extensions.get('ldap_conn')
@@ -109,19 +143,31 @@ class LDAPModel(Entry):
                         controls=None)
         reader.search()
         for entry in reader.entries:
-            entries.append(cls(
-                           dn=entry.entry_get_dn(),
-                           raw_attributes=entry.entry_get_raw_attributes(),
-                           **entry.entry_get_attributes_dict()))
+            new_cls = cls.get_new_class()
+            model = new_cls(dn=entry.entry_get_dn(),
+                            **entry.entry_get_attributes_dict())
+            entries.append(model)
         return entries
 
-    @classmethod
-    def get_abstract_object_def(cls):
-        object_def = ObjectDef(getattr(cls, 'object_classes'))
-        for key in dir(cls):
-            attr = getattr(cls, key)
-            if not isinstance(attr, LDAPAttribute):
-                continue
-            attr_def = attr.get_abstract_attr_def(key)
-            object_def.add(attr_def)
-        return object_def
+    def get_attributes_dict(self):
+        attr_dict = dict()
+        for attr in self._attributes.keys():
+            attr_dict.update({attr: getattr(self, attr)})
+        return attr_dict
+
+    def to_json(self, indent=2, sort=True):
+        json_entry = dict()
+        json_entry['dn'] = self.dn
+        json_entry['attributes'] = self.get_attributes_dict()
+
+        if str == bytes:
+            check_json_dict(json_entry)
+
+        json_output = json.dumps(json_entry, ensure_ascii=True, sort_keys=sort,
+                                 indent=indent, check_circular=True,
+                                 default=format_json, separators=(',', ': '))
+
+        return json_output
+
+
+LDAPModel = LDAPEntry

@@ -13,13 +13,13 @@ from setuptools import setup
 
 setup(
     name='Flask-LDAPConn',
-    version='0.5.2',
+    version='0.6-dev',
     url='http://github.com/rroemhild/flask-ldapconn',
     license='BSD',
     author='Rafael Römhild',
     author_email='rafael@roemhild.de',
     keywords='flask ldap ldap3',
-    description='Pure python, LDAP connection and model for Flask Applications',
+    description='Pure python, LDAP connection and ORM for Flask Applications',
     long_description=open('README.rst').read(),
     packages=[
         'flask_ldapconn'
