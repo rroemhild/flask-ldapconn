@@ -92,20 +92,18 @@ class LDAPConnModelTestCase(unittest.TestCase):
 
     def test_model_search(self):
         with self.app.test_request_context():
-            entries = self.user.search(
+            entry = self.user.query.filter(
                 'email: %s' % self.app.config['USER_EMAIL']
-            )
-            for entry in entries:
-                self.assertEqual(entry.email.value,
-                                 self.app.config['USER_EMAIL'])
+            ).first()
+            self.assertEqual(entry.email.value,
+                             self.app.config['USER_EMAIL'])
 
     def test_model_search_set_attribute(self):
         new_email = 'philip@planetexpress.com'
         with self.app.test_request_context():
-            entries = self.user.search(
+            entry = self.user.query.filter(
                 'email: %s' % self.app.config['USER_EMAIL']
-            )
-            entry = entries[0]
+            ).first()
             entry.email = new_email
             self.assertEqual(entry.email.value, new_email)
 
@@ -113,10 +111,9 @@ class LDAPConnModelTestCase(unittest.TestCase):
         new_email_list = ['philip@planetexpress.com',
                           'a.fry@planetexpress.com']
         with self.app.test_request_context():
-            entries = self.user.search(
+            entry = self.user.query.filter(
                 'email: %s' % self.app.config['USER_EMAIL']
-            )
-            entry = entries[0]
+            ).first()
             entry.email = new_email_list
             self.assertEqual(entry.email.value, new_email_list)
 
@@ -128,28 +125,69 @@ class LDAPConnModelTestCase(unittest.TestCase):
 
     def test_model_new(self):
         with self.app.test_request_context():
-            user = self.user(name='Rafael',
+            user = self.user(name='Rafael Römhild',
                              email='rafael@planetexpress.com')
             self.assertEqual(user.email.value, 'rafael@planetexpress.com')
 
     def test_model_fetch_entry(self):
         uid = 'bender'
         with self.app.test_request_context():
-            user = self.user.fetch('uid', uid)
+            user = self.user.query.filter('userid: {}'.format(uid)).first()
             self.assertEqual(user.userid.value, uid)
 
     def test_model_fetch_entry_authenticate(self):
         uid = 'fry'
         with self.app.test_request_context():
-            user = self.user.fetch('uid', uid)
+            user = self.user.query.filter('userid: {}'.format(uid)).first()
             password = self.app.config['USER_PASSWORD']
             self.assertTrue(user.authenticate(password))
 
     def test_model_fetch_entry_exception(self):
         uid = 'xyz'
         with self.app.test_request_context():
-            user = self.user.fetch('uid', uid)
+            user = self.user.query.filter('userid: {}'.format(uid)).first()
             self.assertEqual(user, None)
+
+    def test_model_fetch_multible_entries(self):
+        expected_uids = ['bender', 'fry', 'hermes', 'leela', 'professor',
+                         'zoidberg']
+        response_uids = []
+        query_filter = 'email: *@planetexpress.com'
+        with self.app.test_request_context():
+            entries = self.user.query.filter(query_filter).all()
+            for entry in entries:
+                response_uids.append(entry.userid.value)
+        matched_uids = set(expected_uids).intersection(response_uids)
+        self.assertEqual(len(expected_uids), len(matched_uids))
+
+    def test_model_get_dn(self):
+        dn = 'cn=Philip J. Fry,ou=people,dc=planetexpress,dc=com'
+        with self.app.test_request_context():
+            user = self.user.query.get(dn)
+            self.assertEqual(dn, user.dn)
+
+    def test_model_get_attributes_dict(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: bender').first()
+            attrs = ['name', 'email', 'userid']
+            attr_dict = user.get_attributes_dict()
+            self.assertTrue(isinstance(attr_dict, dict))
+            for attr in attrs:
+                self.assertTrue(isinstance(attr_dict[attr], list))
+
+    def test_model_to_json(self):
+        import json
+
+        def is_json(myjson):
+            try:
+                json.loads(myjson)
+            except (ValueError, TypeError):
+                return False
+            return True
+
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: bender').first()
+            self.assertTrue(is_json(user.to_json()))
 
 
 class LDAPConnAuthTestCase(LDAPConnTestCase):

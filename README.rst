@@ -22,7 +22,7 @@ Flask-LDAPConn
 
 Flask-LDAPConn is a Flask extension providing `ldap3 <https://github.com/cannatag/ldap3>`_ (an LDAP V3 pure Python client) connection for accessing LDAP servers.
 
-To abstract access to LDAP data this extension also provides a simple ORM model class, currently with read-only access.
+To abstract access to LDAP data this extension provides a simple ORM model class, currently with read-only access.
 
 
 Installation
@@ -106,13 +106,13 @@ User model sample
         userid = ldap.Attribute('uid')
 
     with app.app_context():
-        entries = User.search('email: @example.com')
+        entries = User.query.filter('email: *@example.com').all()
         for entry in entries:
             print u'Name: {}'.format(entry.name)
 
 
-Authentication sample
----------------------
+Authenticate with Client
+------------------------
 
 .. code-block:: python
 

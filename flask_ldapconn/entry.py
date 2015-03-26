@@ -4,12 +4,13 @@ import json
 from six import add_metaclass
 from copy import deepcopy
 from flask import current_app
+from ldap3 import ObjectDef
 from ldap3 import LDAPEntryError
-from ldap3 import ObjectDef, Reader
-from ldap3 import SUBTREE, STRING_TYPES
+from ldap3 import STRING_TYPES
 from ldap3.utils.conv import check_json_dict, format_json
 
-from .attributes import LDAPAttribute
+from .query import BaseQuery
+from .attribute import LDAPAttribute
 
 
 __all__ = ('LDAPEntry',)
@@ -18,8 +19,9 @@ __all__ = ('LDAPEntry',)
 class LDAPEntryMeta(type):
 
     base_dn = None
-    search_scope = SUBTREE
+    sub_tree = True
     object_classes = ['top']
+    operational_attributes = False
 
     def __init__(cls, name, bases, ns):
         cls._attributes = dict()
@@ -32,10 +34,14 @@ class LDAPEntryMeta(type):
                 attr_def = value.get_abstract_attr_def(key)
                 cls._object_def.add(attr_def)
 
-    def get_new_class(cls):
+    def get_new_type(cls):
         class_dict = deepcopy(cls()._attributes)
         new_cls = type(cls.__name__, (LDAPEntry,), class_dict)
         return new_cls
+
+    @property
+    def query(cls):
+        return BaseQuery(cls)
 
 
 @add_metaclass(LDAPEntryMeta)
@@ -46,6 +52,14 @@ class LDAPEntry(object):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def __iter__(self):
+        for attribute in self._attributes:
+            yield self._attributes[attribute]
+            raise StopIteration
+
+    def __contains__(self, item):
+        return True if self.__getitem__(item) else False
 
     def __getitem__(self, item):
         return self.__getattr__(item)
@@ -93,67 +107,9 @@ class LDAPEntry(object):
         ldapc = app.extensions.get('ldap_conn')
         return ldapc.authenticate(self.dn, password)
 
-    @classmethod
-    def fetch(self, attribute, value, search_filter=None):
-        '''Return the first entry from a attribute=value search
-
-        Args:
-            attribute (str): Perfom search with attribute.
-            value (str): The value in attribute.
-            query (str): Standard LDAP filter.
-
-        Return:
-            entry (LDAPConn.LDAPModel): The first entry from the search
-                response or None.
-        '''
-        query = '({0}={1})'.format(attribute, value)
-        if search_filter is not None:
-            query = '(&{0}{1})'.format(query, search_filter)
-
-        try:
-            entries = self.search(query)
-            return entries[0]
-        except IndexError:
-            return None
-
-    @classmethod
-    def search(cls, query):
-        '''Perform searches with a ldap3.Reader instance
-
-        Args:
-            query (str): A simplified query or a standard LDAP filter.
-
-        Returns:
-            list: A List of LDAPConn.LDAPModel objects.
-        '''
-        entries = []
-        base_dn = getattr(cls, 'base_dn')
-        search_scope = getattr(cls, 'search_scope')
-        object_def = getattr(cls, '_object_def')
-
-        app = current_app._get_current_object()
-        ldapc = app.extensions.get('ldap_conn')
-        reader = Reader(connection=ldapc.connection,
-                        object_def=object_def,
-                        query=query,
-                        base=base_dn,
-                        components_in_and=True,
-                        sub_tree=search_scope,
-                        get_operational_attributes=False,
-                        controls=None)
-        reader.search()
-        for entry in reader.entries:
-            new_cls = cls.get_new_class()
-            model = new_cls(dn=entry.entry_get_dn(),
-                            **entry.entry_get_attributes_dict())
-            entries.append(model)
-        return entries
-
     def get_attributes_dict(self):
-        attr_dict = dict()
-        for attr in self._attributes.keys():
-            attr_dict.update({attr: getattr(self, attr)})
-        return attr_dict
+        return dict((attribute_key, attribute_value.values) for (attribute_key,
+                    attribute_value) in self._attributes.items())
 
     def to_json(self, indent=2, sort=True):
         json_entry = dict()
@@ -163,9 +119,13 @@ class LDAPEntry(object):
         if str == bytes:
             check_json_dict(json_entry)
 
-        json_output = json.dumps(json_entry, ensure_ascii=True, sort_keys=sort,
-                                 indent=indent, check_circular=True,
-                                 default=format_json, separators=(',', ': '))
+        json_output = json.dumps(json_entry,
+                                 ensure_ascii=True,
+                                 sort_keys=sort,
+                                 indent=indent,
+                                 check_circular=True,
+                                 default=format_json,
+                                 separators=(',', ': '))
 
         return json_output
 

@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 from ssl import CERT_OPTIONAL, PROTOCOL_TLSv1
+from flask import current_app
+from flask import _app_ctx_stack as stack
 from ldap3 import Server, Connection, Tls
 from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
 from ldap3 import LDAPBindError, LDAPInvalidFilterError, LDAPInvalidDnError
 from ldap3.utils.dn import split_ava
 
-from flask import current_app
-from flask import _app_ctx_stack as stack
-
-from .models import LDAPEntry
-from .attributes import LDAPAttribute
+from .entry import LDAPEntry
+from .attribute import LDAPAttribute
 
 
 __all__ = ('LDAPConn',)
