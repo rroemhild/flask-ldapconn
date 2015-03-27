@@ -188,6 +188,40 @@ class LDAPConnModelTestCase(unittest.TestCase):
             user = self.user.query.filter('userid: bender').first()
             self.assertTrue(is_json(user.to_json()))
 
+    def test_model_iter(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: bender').first()
+            for attr in user:
+                self.assertTrue(isinstance(attr, self.ldap.Attribute))
+
+    def test_model_contains(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: bender').first()
+            self.assertTrue('userid' in user)
+
+    def test_model_getarr_att_not_found(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: bender').first()
+            self.assertFalse('active' in user)
+
+    def test_model_setitem(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: fry').first()
+            user['userid'] = 'xyz'
+            self.assertEqual(user.userid.value, 'xyz')
+
+    def test_model_attribute_str(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: fry').first()
+            self.assertTrue(isinstance(user.userid, self.ldap.Attribute))
+
+    def test_model_attribute_iter(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: professor').first()
+            self.assertTrue(isinstance(user.email.value, list))
+            for mail in user.email:
+                pass
+
 
 class LDAPConnAuthTestCase(LDAPConnTestCase):
 

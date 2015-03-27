@@ -18,6 +18,8 @@ __all__ = ('LDAPEntry',)
 
 class LDAPEntryMeta(type):
 
+    _changetype = 'add'
+
     base_dn = None
     sub_tree = True
     object_classes = ['top']
@@ -56,7 +58,6 @@ class LDAPEntry(object):
     def __iter__(self):
         for attribute in self._attributes:
             yield self._attributes[attribute]
-            raise StopIteration
 
     def __contains__(self, item):
         return True if self.__getitem__(item) else False
@@ -66,9 +67,9 @@ class LDAPEntry(object):
 
     def __getattr__(self, item):
         if item not in self._attributes:
-            raise LDAPEntryError('attribute not found')
+            return None
 
-        return getattr(self._attributes, item)
+        return self._attributes[item]
 
     def __setitem__(self, key, value):
         self.__setattr__(key, value)
@@ -77,8 +78,8 @@ class LDAPEntry(object):
         if key not in self._attributes:
             raise LDAPEntryError('attribute not found')
 
-        if isinstance(value, STRING_TYPES):
-            value = [value]
+#        if isinstance(value, STRING_TYPES):
+#            value = [value]
 
         self._attributes[key].value = value
 
