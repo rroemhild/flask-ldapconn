@@ -4,12 +4,10 @@ import os
 import sys
 import time
 import unittest
-
 import flask
 
 from ldap3 import SUBTREE, LDAPEntryError
 from flask_ldapconn import LDAPConn
-from flask_ldapconn.compat import print_function, to_bytes
 
 
 DOCKER_RUN = os.environ.get('DOCKER_RUN', True)
@@ -63,8 +61,9 @@ class LDAPConnSearchTestCase(LDAPConnTestCase):
     def test_whoami(self):
         with self.app.test_request_context():
             conn = self.ldap.connection
-            self.assertEqual(conn.extend.standard.who_am_i(),
-                             to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
+            whoami = conn.extend.standard.who_am_i()
+            self.assertEqual(whoami.decode('utf-8'),
+                             'dn:{}'.format(self.app.config['LDAP_BINDDN']))
 
 
 class LDAPConnModelTestCase(unittest.TestCase):
@@ -271,8 +270,9 @@ class LDAPConnSSLTestCase(unittest.TestCase):
     def test_whoami(self):
         with self.app.test_request_context():
             conn = self.ldap.connection
-            self.assertEqual(conn.extend.standard.who_am_i(),
-                             to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
+            whoami = conn.extend.standard.who_am_i()
+            self.assertEqual(whoami.decode('utf-8'),
+                             'dn:{}'.format(self.app.config['LDAP_BINDDN']))
 
 
 class LDAPConnAnonymousTestCase(unittest.TestCase):
@@ -330,8 +330,9 @@ class LDAPConnDeprecatedTestCAse(LDAPConnTestCase):
 
     def test_whoami_deprecated(self):
         with self.app.test_request_context():
-            self.assertEqual(self.ldap.whoami(),
-                             to_bytes('dn:' + self.app.config['LDAP_BINDDN']))
+            whoami = self.ldap.whoami()
+            self.assertEqual(whoami.decode('utf-8'),
+                             'dn:{}'.format(self.app.config['LDAP_BINDDN']))
 
 
 if __name__ == '__main__':
