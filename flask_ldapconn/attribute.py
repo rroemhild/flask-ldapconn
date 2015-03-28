@@ -4,11 +4,13 @@ from ldap3 import AttrDef, LDAPAttributeError, STRING_TYPES
 
 class LDAPAttribute(object):
 
-    def __init__(self, name, validate=None, default=None, dereference_dn=None):
+    def __init__(self, name, primary=False, validate=None, default=None,
+                 dereference_dn=None):
         self.__dict__['values'] = []
         self.__dict__['name'] = name
         self.__dict__['validate'] = validate
         self.__dict__['default'] = default
+        self.__dict__['changetype'] = None
         self.__dict__['dereference_dn'] = dereference_dn
 
     def __str__(self):
@@ -35,6 +37,20 @@ class LDAPAttribute(object):
             return self.__dict__['values'][0]
         else:
             return self.__dict__['values']
+
+    def append(self, value):
+        '''Add another value to the attribute'''
+        self.__dict__['values'].append(value)
+
+    @property
+    def delete(self):
+        '''Delete this attribute
+
+        This property sets the value to an empty list an the changetype
+        to delete.
+        '''
+        self.__dict__['values'] = []
+        self.changetype = 'delete'
 
     def get_abstract_attr_def(self, key):
         return AttrDef(name=self.name, key=key,

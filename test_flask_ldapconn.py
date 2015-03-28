@@ -80,12 +80,14 @@ class LDAPConnModelTestCase(unittest.TestCase):
         class User(self.ldap.Entry):
             # LDAP meta-data
             base_dn = self.app.config['LDAP_BASEDN']
+            entry_rdn = 'cn'
             object_classes = self.app.config['LDAP_OBJECTCLASS']
 
             # inetOrgPerson
             name = self.ldap.Attribute('cn')
             email = self.ldap.Attribute('mail')
             userid = self.ldap.Attribute('uid')
+            surname = self.ldap.Attribute('sn')
 
         self.user = User
 
@@ -221,6 +223,23 @@ class LDAPConnModelTestCase(unittest.TestCase):
             self.assertTrue(isinstance(user.email.value, list))
             for mail in user.email:
                 pass
+
+    def test_model_operation_add(self):
+        with self.app.test_request_context():
+            new_user = self.user(name='Rafael Römhild',
+                                 userid='rafael',
+                                 email='rafael@planetexpress.com',
+                                 surname='Römhild')
+            new_user.save()
+            user = self.user.query.filter('userid: rafael').first()
+            self.assertEqual(new_user.userid.value, user.userid.value)
+
+    def test_model_operation_delete(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: rafael').first()
+            user.delete()
+            user = self.user.query.filter('userid: rafael').first()
+            self.assertEqual(user, None)
 
 
 class LDAPConnAuthTestCase(LDAPConnTestCase):

@@ -6,7 +6,7 @@ from copy import deepcopy
 from flask import current_app
 from ldap3 import ObjectDef
 from ldap3 import LDAPEntryError
-from ldap3 import STRING_TYPES
+from ldap3.utils.dn import safe_dn
 from ldap3.utils.conv import check_json_dict, format_json
 
 from .query import BaseQuery
@@ -18,11 +18,13 @@ __all__ = ('LDAPEntry',)
 
 class LDAPEntryMeta(type):
 
-    _changetype = 'add'
-
+    # requiered
     base_dn = None
-    sub_tree = True
+    entry_rdn = None
     object_classes = ['top']
+
+    # optional
+    sub_tree = True
     operational_attributes = False
 
     def __init__(cls, name, bases, ns):
@@ -36,21 +38,22 @@ class LDAPEntryMeta(type):
                 attr_def = value.get_abstract_attr_def(key)
                 cls._object_def.add(attr_def)
 
+    @property
+    def query(cls):
+        return BaseQuery(cls)
+
     def get_new_type(cls):
         class_dict = deepcopy(cls()._attributes)
         new_cls = type(cls.__name__, (LDAPEntry,), class_dict)
         return new_cls
 
-    @property
-    def query(cls):
-        return BaseQuery(cls)
-
 
 @add_metaclass(LDAPEntryMeta)
 class LDAPEntry(object):
 
-    def __init__(self, dn=None, **kwargs):
+    def __init__(self, dn=None, changetype='add', **kwargs):
         self.__dict__['_dn'] = dn
+        self.__dict__['_changetype'] = changetype
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -78,24 +81,57 @@ class LDAPEntry(object):
         if key not in self._attributes:
             raise LDAPEntryError('attribute not found')
 
-#        if isinstance(value, STRING_TYPES):
-#            value = [value]
-
         self._attributes[key].value = value
 
     @property
     def dn(self):
+        if self._dn is None:
+            self.make_dn()
         return self._dn
 
+    def make_dn(self):
+        for attr in self._object_def:
+            if self.entry_rdn == attr.name:
+                if len(self._attributes[attr.key]) == 1:
+                    dn = '{attr}={value},{base_dn}'.format(
+                        attr=self.entry_rdn,
+                        value=self._attributes[attr.key].value,
+                        base_dn=self.base_dn
+                    )
+                    self.__dict__['_dn'] = safe_dn(dn)
+
+    def get_attributes_dict(self):
+        return dict((attribute_key, attribute_value.values) for (attribute_key,
+                    attribute_value) in self._attributes.items())
+
+    def map_attributes_dict(self, attr_dict):
+        new_dict = dict()
+        for attribute_key, attribute_value in attr_dict.items():
+            attribute_def = self._object_def[attribute_key]
+            new_dict.update({attribute_def.name: attribute_value})
+        return new_dict
+
+    @property
+    def connection(self):
+        app = current_app._get_current_object()
+        ldapc = app.extensions.get('ldap_conn')
+        return ldapc
+
     def delete(self):
-        '''Delete this entry from LDAP server
-        '''
-        pass
+        '''Delete this entry from LDAP server'''
+        self.connection.connection.delete(self.dn)
 
     def save(self):
-        '''Save the current instance
-        '''
-        pass
+        '''Save the current instance'''
+        attr_dict = self.map_attributes_dict(self.get_attributes_dict())
+        if self._changetype is 'add':
+            return self.connection.connection.add(self.dn,
+                                                  self.object_classes,
+                                                  attr_dict)
+        else:
+            pass
+
+        return False
 
     def authenticate(self, password):
         '''Authenticate a user with an LDAPModel class
@@ -104,13 +140,7 @@ class LDAPEntry(object):
             password (str): The user password.
 
         '''
-        app = current_app._get_current_object()
-        ldapc = app.extensions.get('ldap_conn')
-        return ldapc.authenticate(self.dn, password)
-
-    def get_attributes_dict(self):
-        return dict((attribute_key, attribute_value.values) for (attribute_key,
-                    attribute_value) in self._attributes.items())
+        return self.connection.authenticate(self.dn, password)
 
     def to_json(self, indent=2, sort=True):
         json_entry = dict()
