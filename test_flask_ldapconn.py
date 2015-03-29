@@ -3,6 +3,8 @@
 import os
 import sys
 import time
+import random
+import string
 import unittest
 import flask
 
@@ -29,6 +31,10 @@ LDAP_OBJECTCLASS = ['inetOrgPerson']
 LDAP_AUTH_BASEDN = 'ou=people,dc=planetexpress,dc=com'
 LDAP_AUTH_ATTR = 'mail'
 LDAP_AUTH_SEARCH_FILTER = '(objectClass=inetOrgPerson)'
+
+UID_SUFFIX = ''.join(random.choice(
+                        string.ascii_lowercase + string.digits
+                    ) for _ in range(6))
 
 
 class LDAPConnTestCase(unittest.TestCase):
@@ -225,20 +231,24 @@ class LDAPConnModelTestCase(unittest.TestCase):
                 pass
 
     def test_model_operation_add(self):
+        uid = 'rafael-{}'.format(UID_SUFFIX)
+        query_filter = 'userid: {}'.format(uid)
         with self.app.test_request_context():
             new_user = self.user(name='Rafael Römhild',
-                                 userid='rafael',
+                                 userid=uid,
                                  email='rafael@planetexpress.com',
                                  surname='Römhild')
             new_user.save()
-            user = self.user.query.filter('userid: rafael').first()
+            user = self.user.query.filter(query_filter).first()
             self.assertEqual(new_user.userid.value, user.userid.value)
 
     def test_model_operation_delete(self):
+        uid = 'rafael-{}'.format(UID_SUFFIX)
+        query_filter = 'userid: {}'.format(uid)
         with self.app.test_request_context():
-            user = self.user.query.filter('userid: rafael').first()
+            user = self.user.query.filter(query_filter).first()
             user.delete()
-            user = self.user.query.filter('userid: rafael').first()
+            user = self.user.query.filter(query_filter).first()
             self.assertEqual(user, None)
 
 
