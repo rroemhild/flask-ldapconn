@@ -86,7 +86,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         class User(self.ldap.Entry):
             # LDAP meta-data
             base_dn = self.app.config['LDAP_BASEDN']
-            entry_rdn = 'cn'
+            entry_rdn = ['cn', 'uid']
             object_classes = self.app.config['LDAP_OBJECTCLASS']
 
             # inetOrgPerson
@@ -234,7 +234,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         uid = 'rafael-{}'.format(UID_SUFFIX)
         query_filter = 'userid: {}'.format(uid)
         with self.app.test_request_context():
-            new_user = self.user(name='Rafael Römhild {}'.format(UID_SUFFIX),
+            new_user = self.user(name='Rafael Römhild',
                                  userid=uid,
                                  email='rafael@planetexpress.com',
                                  surname='Römhild')

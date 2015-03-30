@@ -20,7 +20,7 @@ class LDAPEntryMeta(type):
 
     # requiered
     base_dn = None
-    entry_rdn = None
+    entry_rdn = ['cn']
     object_classes = ['top']
 
     # optional
@@ -86,19 +86,24 @@ class LDAPEntry(object):
     @property
     def dn(self):
         if self._dn is None:
-            self.make_dn()
+            self.generate_dn_from_entry()
         return self._dn
 
-    def make_dn(self):
+    def generate_dn_from_entry(self):
+        rdn_list = list()
         for attr in self._object_def:
-            if self.entry_rdn == attr.name:
+            if attr.name in self.entry_rdn:
                 if len(self._attributes[attr.key]) == 1:
-                    dn = '{attr}={value},{base_dn}'.format(
-                        attr=self.entry_rdn,
-                        value=self._attributes[attr.key].value,
-                        base_dn=self.base_dn
+                    rdn = '{attr}={value}'.format(
+                        attr=attr.name,
+                        value=self._attributes[attr.key].value
                     )
-                    self.__dict__['_dn'] = safe_dn(dn)
+                    rdn_list.append(rdn)
+
+        dn = '{rdn},{base_dn}'.format(rdn='+'.join(rdn_list),
+                                      base_dn=self.base_dn)
+
+        self.__dict__['_dn'] = safe_dn(dn)
 
     def get_attributes_dict(self):
         return dict((attribute_key, attribute_value.values) for (attribute_key,
