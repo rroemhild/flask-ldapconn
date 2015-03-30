@@ -22,7 +22,7 @@ Flask-LDAPConn
 
 Flask-LDAPConn is a Flask extension providing `ldap3 <https://github.com/cannatag/ldap3>`_ (an LDAP V3 pure Python client) connection for accessing LDAP servers.
 
-To abstract access to LDAP data this extension provides a simple ORM model class, currently with read-only access.
+To abstract access to LDAP data this extension provides a simple ORM model.
 
 
 Installation
@@ -85,8 +85,8 @@ Client sample
         response = ldapc.response
 
 
-User model sample
------------------
+User model samples
+------------------
 
 .. code-block:: python
 
@@ -104,12 +104,47 @@ User model sample
         name = ldap.Attribute('cn')
         email = ldap.Attribute('mail')
         userid = ldap.Attribute('uid')
+        surname = ldap.Attribute('sn')
+        givenname = ldap.Attribute('givenName')
 
     with app.app_context():
+
+        # get a list of entries
         entries = User.query.filter('email: *@example.com').all()
         for entry in entries:
             print u'Name: {}'.format(entry.name)
 
+        # get the first entry
+        user = User.query.filter('userid: user1').first()
+
+        # new entry
+        new_user = User(
+            name='User Three',
+            email='user3@example.com',
+            userid='user3',
+            surname='Three',
+            givenname='User'
+        )
+        new_user.save()
+
+        # modify entry
+        mod_user = User.query.filter('userid: user1').first()
+        mod_user.name = 'User Number Three'
+        mod_user.email.append.('u.three@example.com')
+        mod_user.givenname.delete()
+        mod_user.save()
+
+        # remove entry
+        rm_user = User.query.filter('userid: user1').first()
+        rm_user.delete()
+
+        # authenticate user
+        auth_user = User.query.filter('userid: user1').first()
+        if auth_user:
+            if auth_user.authenticate('password1234'):
+                print('Authenticated')
+            else:            
+                print('Wrong password')
 
 Authenticate with Client
 ------------------------

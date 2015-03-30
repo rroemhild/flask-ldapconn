@@ -1,3 +1,11 @@
+0.6 (development)
+-----------------
+
+- Refactored the LDAPModel class
+- LDAPModel is now LDAPEntry
+- Add write operation save (add, modify) and delete
+- LDAPEntry now use a query class to simplify ldap query
+
 0.5.2 2015-03-11
 ----------------
 
