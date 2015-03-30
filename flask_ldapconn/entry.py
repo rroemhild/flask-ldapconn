@@ -56,7 +56,9 @@ class LDAPEntry(object):
         self.__dict__['_changetype'] = changetype
 
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            if key not in self._attributes:
+                raise LDAPEntryError('attribute not found')
+            self._attributes[key]._init = value
 
     def __iter__(self):
         for attribute in self._attributes:
@@ -109,12 +111,22 @@ class LDAPEntry(object):
         return dict((attribute_key, attribute_value.values) for (attribute_key,
                     attribute_value) in self._attributes.items())
 
-    def map_attributes_dict(self, attr_dict):
-        new_dict = dict()
+    def get_entry_add_dict(self, attr_dict):
+        add_dict = dict()
         for attribute_key, attribute_value in attr_dict.items():
-            attribute_def = self._object_def[attribute_key]
-            new_dict.update({attribute_def.name: attribute_value})
-        return new_dict
+            if self._attributes[attribute_key].value:
+                attribute_def = self._object_def[attribute_key]
+                add_dict.update({attribute_def.name: attribute_value})
+        return add_dict
+
+    def get_entry_modify_dict(self, attr_dict):
+        modify_dict = dict()
+        for attribute_key, attribute_value in attr_dict.items():
+            if self._attributes[attribute_key].changetype is not None:
+                attribute_def = self._object_def[attribute_key]
+                changes = self._attributes[attribute_key].get_changes_tuple()
+                modify_dict.update({attribute_def.name: changes})
+        return modify_dict
 
     @property
     def connection(self):
@@ -128,13 +140,14 @@ class LDAPEntry(object):
 
     def save(self):
         '''Save the current instance'''
-        attr_dict = self.map_attributes_dict(self.get_attributes_dict())
+        attributes = self.get_entry_add_dict(self.get_attributes_dict())
         if self._changetype is 'add':
             return self.connection.connection.add(self.dn,
                                                   self.object_classes,
-                                                  attr_dict)
-        else:
-            pass
+                                                  attributes)
+        elif self._changetype == 'modify':
+            changes = self.get_entry_modify_dict(self.get_attributes_dict())
+            return self.connection.connection.modify(self.dn, changes)
 
         return False
 

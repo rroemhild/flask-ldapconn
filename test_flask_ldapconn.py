@@ -92,8 +92,10 @@ class LDAPConnModelTestCase(unittest.TestCase):
             # inetOrgPerson
             name = self.ldap.Attribute('cn')
             email = self.ldap.Attribute('mail')
+            title = self.ldap.Attribute('title')
             userid = self.ldap.Attribute('uid')
             surname = self.ldap.Attribute('sn')
+            givenname = self.ldap.Attribute('givenName')
 
         self.user = User
 
@@ -237,12 +239,27 @@ class LDAPConnModelTestCase(unittest.TestCase):
             new_user = self.user(name='Rafael Römhild',
                                  userid=uid,
                                  email='rafael@planetexpress.com',
-                                 surname='Römhild')
-            new_user.save()
+                                 surname='Römhild',
+                                 givenname='Raphael')
+            self.assertTrue(new_user.save())
             user = self.user.query.filter(query_filter).first()
             self.assertEqual(new_user.userid.value, user.userid.value)
 
-    def test_model_operation_delete(self):
+    def test_model_operation_modify(self):
+        uid = 'rafael-{}'.format(UID_SUFFIX)
+        query_filter = 'userid: {}'.format(uid)
+        with self.app.test_request_context():
+            mod_user = self.user.query.filter(query_filter).first()
+            mod_user.givenname = 'Rafael'
+            mod_user.title = 'SysAdmin'
+            mod_user.email.append('it@planetexpress.co')
+            self.assertTrue(mod_user.save())
+            user = self.user.query.filter(query_filter).first()
+            self.assertEqual(user.givenname.value, 'Rafael')
+            self.assertEqual(user.title.value, 'SysAdmin')
+            self.assertTrue('it@planetexpress.co' in user.email)
+
+    def test_model_operation_remove(self):
         uid = 'rafael-{}'.format(UID_SUFFIX)
         query_filter = 'userid: {}'.format(uid)
         with self.app.test_request_context():
