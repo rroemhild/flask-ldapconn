@@ -234,7 +234,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         uid = 'rafael-{}'.format(UID_SUFFIX)
         query_filter = 'userid: {}'.format(uid)
         with self.app.test_request_context():
-            new_user = self.user(name='Rafael Römhild',
+            new_user = self.user(name='Rafael Römhild {}'.format(UID_SUFFIX),
                                  userid=uid,
                                  email='rafael@planetexpress.com',
                                  surname='Römhild')
