@@ -68,7 +68,7 @@ class LDAPConnSearchTestCase(LDAPConnTestCase):
         with self.app.test_request_context():
             conn = self.ldap.connection
             whoami = conn.extend.standard.who_am_i()
-            self.assertEqual(whoami.decode('utf-8'),
+            self.assertEqual(whoami,
                              'dn:{}'.format(self.app.config['LDAP_BINDDN']))
 
 
@@ -256,6 +256,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
             self.assertTrue(mod_user.save())
             user = self.user.query.filter(query_filter).first()
             self.assertEqual(user.givenname.value, 'Rafael')
+            self.assertEqual(user.surname.value, u'Römhild')
             self.assertEqual(user.title.value, 'SysAdmin')
             self.assertTrue('it@planetexpress.co' in user.email)
 
@@ -351,7 +352,7 @@ class LDAPConnSSLTestCase(unittest.TestCase):
         with self.app.test_request_context():
             conn = self.ldap.connection
             whoami = conn.extend.standard.who_am_i()
-            self.assertEqual(whoami.decode('utf-8'),
+            self.assertEqual(whoami,
                              'dn:{}'.format(self.app.config['LDAP_BINDDN']))
 
 
@@ -411,7 +412,7 @@ class LDAPConnDeprecatedTestCAse(LDAPConnTestCase):
     def test_whoami_deprecated(self):
         with self.app.test_request_context():
             whoami = self.ldap.whoami()
-            self.assertEqual(whoami.decode('utf-8'),
+            self.assertEqual(whoami,
                              'dn:{}'.format(self.app.config['LDAP_BINDDN']))
 
 
