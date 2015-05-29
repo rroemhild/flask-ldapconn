@@ -33,8 +33,8 @@ LDAP_AUTH_ATTR = 'mail'
 LDAP_AUTH_SEARCH_FILTER = '(objectClass=inetOrgPerson)'
 
 UID_SUFFIX = ''.join(random.choice(
-                        string.ascii_lowercase + string.digits
-                    ) for _ in range(6))
+    string.ascii_lowercase + string.digits
+) for _ in range(6))
 
 
 class LDAPConnTestCase(unittest.TestCase):
