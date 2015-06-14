@@ -48,6 +48,7 @@ class LDAPConn(object):
             host=app.config['LDAP_SERVER'],
             port=app.config['LDAP_PORT'],
             use_ssl=app.config['LDAP_USE_SSL'],
+            tls=self.tls,
             get_info=GET_ALL_INFO
         )
 
