@@ -29,7 +29,7 @@ setup(
     platforms='any',
     install_requires=[
         'Flask==0.10.1',
-        'ldap3==0.9.8.4',
+        'ldap3==0.9.8.5',
         'six==1.9.0'
     ],
     classifiers=[
