@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
+import ssl
 import time
 import random
 import string
@@ -375,6 +376,24 @@ class LDAPConnAnonymousTestCase(unittest.TestCase):
             self.assertEqual(conn.extend.standard.who_am_i(), None)
 
 
+class LDAPConnTLSCertRequiredTestCase(unittest.TestCase):
+    def setUp(self):
+        app = flask.Flask(__name__)
+        app.config.from_object(__name__)
+        app.config.from_envvar('LDAP_SETTINGS', silent=True)
+        app.config['LDAP_BINDDN'] = None
+        app.config['LDAP_SECRET'] = None
+        app.config['LDAP_REQUIRE_CERT'] = ssl.CERT_REQUIRED
+        ldap = LDAPConn(app)
+
+        self.app = app
+        self.ldap = ldap
+
+    def connection(self):
+        with self.app.test_request_context():
+            self.assertRaises(LDAPStartTLSError, self.ldap.connection)
+
+
 class LDAPConnNoTLSAnonymousTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -395,7 +414,7 @@ class LDAPConnNoTLSAnonymousTestCase(unittest.TestCase):
             self.assertEqual(conn.extend.standard.who_am_i(), None)
 
 
-class LDAPConnDeprecatedTestCAse(LDAPConnTestCase):
+class LDAPConnDeprecatedTestCase(LDAPConnTestCase):
 
     def test_connection_search(self):
         attr = self.app.config['LDAP_SEARCH_ATTR']

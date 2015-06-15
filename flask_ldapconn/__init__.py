@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from ssl import CERT_OPTIONAL, PROTOCOL_TLSv1
+from ssl import CERT_REQUIRED, PROTOCOL_TLSv1_2
 from flask import current_app
 from flask import _app_ctx_stack as stack
 from ldap3 import Server, Connection, Tls
@@ -37,12 +37,19 @@ class LDAPConn(object):
         app.config.setdefault('LDAP_TIMEOUT', 10)
         app.config.setdefault('LDAP_USE_SSL', False)
         app.config.setdefault('LDAP_USE_TLS', True)
-        app.config.setdefault('LDAP_REQUIRE_CERT', CERT_OPTIONAL)
+        app.config.setdefault('LDAP_TLS_VERSION', PROTOCOL_TLSv1_2)
+        app.config.setdefault('LDAP_REQUIRE_CERT', CERT_REQUIRED)
         app.config.setdefault('LDAP_CERT_PATH', None)
+        app.config.setdefault('LDAP_CLIENT_PRIVATE_KEY', None)
+        app.config.setdefault('LDAP_CLIENT_CERT', None)
 
-        self.tls = Tls(validate=app.config['LDAP_REQUIRE_CERT'],
-                       version=PROTOCOL_TLSv1,
-                       ca_certs_file=app.config['LDAP_CERT_PATH'])
+        self.tls = Tls(
+            local_private_key_file=app.config['LDAP_CLIENT_PRIVATE_KEY'],
+            local_certificate_file=app.config['LDAP_CLIENT_CERT'],
+            validate=app.config['LDAP_REQUIRE_CERT'],
+            version=app.config['LDAP_TLS_VERSION'],
+            ca_certs_file=app.config['LDAP_CERT_PATH']
+        )
 
         self.ldap_server = Server(
             host=app.config['LDAP_SERVER'],

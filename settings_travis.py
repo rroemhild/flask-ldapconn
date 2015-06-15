@@ -1,3 +1,6 @@
+import ssl
+
 LDAP_SERVER = 'ldap.rserver.de'
 LDAP_PORT = 3389
 LDAP_SSL_PORT = 6636
+LDAP_REQUIRE_CERT = ssl.CERT_NONE
