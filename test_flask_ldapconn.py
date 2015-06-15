@@ -27,7 +27,8 @@ LDAP_SEARCH_ATTR = 'mail'
 LDAP_SEARCH_FILTER = '(mail=%s)' % USER_EMAIL
 LDAP_QUERY_FILTER = 'email: %s' % USER_EMAIL
 LDAP_OBJECTCLASS = ['inetOrgPerson']
-
+LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2
+LDAP_REQUIRE_CERT = ssl.CERT_NONE
 
 LDAP_AUTH_BASEDN = 'ou=people,dc=planetexpress,dc=com'
 LDAP_AUTH_ATTR = 'mail'
