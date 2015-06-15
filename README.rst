@@ -27,15 +27,16 @@ Your configuration should be declared within your Flask config. Sample configura
 
 .. code-block:: python
 
-    from ssl import CERT_OPTIONAL
+    import ssl
 
     LDAP_SERVER = 'localhost'
     LDAP_PORT = 389
     LDAP_BINDDN = 'cn=admin,dc=example,dc=com'
     LDAP_SECRET = 'forty-two'
     LDAP_TIMEOUT = 10
-    LDAP_USE_TLS = True
-    LDAP_REQUIRE_CERT = CERT_OPTIONAL
+    LDAP_USE_TLS = True  # default
+    LDAP_REQUIRE_CERT = ssl.CERT_NONE  # default: CERT_REQUIRED
+    LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2  # default: PROTOCOL_TLSv1
     LDAP_CERT_PATH = '/etc/openldap/certs'
 
 Create the ldap instance within your application:
