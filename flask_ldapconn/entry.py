@@ -121,7 +121,7 @@ class LDAPEntry(object):
 
     def get_entry_modify_dict(self, attr_dict):
         modify_dict = dict()
-        for attribute_key, attribute_value in attr_dict.items():
+        for attribute_key in attr_dict.keys():
             if self._attributes[attribute_key].changetype is not None:
                 attribute_def = self._object_def[attribute_key]
                 changes = self._attributes[attribute_key].get_changes_tuple()
