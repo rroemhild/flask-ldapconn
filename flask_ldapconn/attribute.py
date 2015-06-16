@@ -5,8 +5,7 @@ from ldap3 import STRING_TYPES, MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 
 class LDAPAttribute(object):
 
-    def __init__(self, name, primary=False, validate=None, default=None,
-                 dereference_dn=None):
+    def __init__(self, name, validate=None, default=None, dereference_dn=None):
         self.__dict__['name'] = name
         self.__dict__['values'] = []
         self.__dict__['default'] = default
