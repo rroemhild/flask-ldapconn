@@ -1,5 +1,21 @@
-0.6 (development)
------------------
+0.6.3 2015-07-07
+----------------
+
+- Update ldap3 to version 0.9.8.6
+
+0.6.2 2015-06-21
+----------------
+
+- Fix TLS settings
+
+0.6.1 2015-05-29
+----------------
+
+- Update ldap3 to v0.9.8.4
+
+
+0.6 2015-03-31
+--------------
 
 - Refactored the LDAPModel class
 - LDAPModel is now LDAPEntry
