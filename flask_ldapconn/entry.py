@@ -3,6 +3,8 @@ import json
 
 from six import add_metaclass
 from copy import deepcopy
+from importlib import import_module
+
 from flask import current_app
 from ldap3 import ObjectDef
 from ldap3 import LDAPEntryError
@@ -44,7 +46,9 @@ class LDAPEntryMeta(type):
 
     def get_new_type(cls):
         class_dict = deepcopy(cls()._attributes)
-        new_cls = type(cls.__name__, (LDAPEntry,), class_dict)
+        module = import_module(cls.__module__)
+        obj = getattr(module, cls.__name__)
+        new_cls = type(cls.__name__, (obj,), class_dict)
         return new_cls
 
 

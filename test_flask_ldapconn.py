@@ -12,6 +12,8 @@ import flask
 from ldap3 import SUBTREE, LDAPEntryError
 from flask_ldapconn import LDAPConn
 
+from flask_ldapconn.entry import LDAPEntry
+from flask_ldapconn.attribute import LDAPAttribute
 
 DOCKER_RUN = os.environ.get('DOCKER_RUN', True)
 DOCKER_URL = 'unix://var/run/docker.sock'
@@ -37,6 +39,21 @@ LDAP_AUTH_SEARCH_FILTER = '(objectClass=inetOrgPerson)'
 UID_SUFFIX = ''.join(random.choice(
     string.ascii_lowercase + string.digits
 ) for _ in range(6))
+
+
+class User(LDAPEntry):
+    # LDAP meta-data
+    base_dn = LDAP_AUTH_BASEDN
+    entry_rdn = ['cn', 'uid']
+    object_classes = LDAP_OBJECTCLASS
+
+    # inetOrgPerson
+    name = LDAPAttribute('cn')
+    email = LDAPAttribute('mail')
+    title = LDAPAttribute('title')
+    userid = LDAPAttribute('uid')
+    surname = LDAPAttribute('sn')
+    givenname = LDAPAttribute('givenName')
 
 
 class LDAPConnTestCase(unittest.TestCase):
@@ -84,21 +101,6 @@ class LDAPConnModelTestCase(unittest.TestCase):
 
         self.app = app
         self.ldap = ldap
-
-        class User(self.ldap.Entry):
-            # LDAP meta-data
-            base_dn = self.app.config['LDAP_BASEDN']
-            entry_rdn = ['cn', 'uid']
-            object_classes = self.app.config['LDAP_OBJECTCLASS']
-
-            # inetOrgPerson
-            name = self.ldap.Attribute('cn')
-            email = self.ldap.Attribute('mail')
-            title = self.ldap.Attribute('title')
-            userid = self.ldap.Attribute('uid')
-            surname = self.ldap.Attribute('sn')
-            givenname = self.ldap.Attribute('givenName')
-
         self.user = User
 
     def test_model_search(self):
