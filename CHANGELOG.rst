@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.6.6 (2015-08-10)
+------------------
+* Return manager class in queries instead of fix LDAPEntry class
+* Update six 1.9.0 -> 1.10.0
+
 0.6.5
 -----
 * Update ldap3 to version 0.9.9.1
