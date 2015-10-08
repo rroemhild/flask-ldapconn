@@ -30,7 +30,7 @@ setup(
     install_requires=[
         'Flask==0.10.1',
         'ldap3==0.9.9.1',
-        'six==1.9.0'
+        'six==1.10.0'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
