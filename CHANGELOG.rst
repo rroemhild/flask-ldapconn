@@ -1,7 +1,12 @@
 Changelog
 =========
 
-0.6.6 (2015-08-10)
+0.6.7 (2015-10-11)
+------------------
+
+* Use connections saved on flask.g.ldap_conn
+
+0.6.6 (2015-10-8)
 ------------------
 * Return manager class in queries instead of fix LDAPEntry class
 * Update six 1.9.0 -> 1.10.0

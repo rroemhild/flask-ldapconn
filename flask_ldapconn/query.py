@@ -27,8 +27,7 @@ class BaseQuery(object):
 
     def get_reader_result(self):
         query = ','.join(self.query)
-        app = current_app._get_current_object()
-        ldapc = app.extensions.get('ldap_conn')
+        ldapc = current_app.extensions.get('ldap_conn')
         reader = Reader(connection=ldapc.connection,
                         object_def=self.object_def,
                         query=query,

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from ssl import CERT_REQUIRED, PROTOCOL_TLSv1
-from flask import current_app
+from flask import current_app, g
 from flask import _app_ctx_stack as stack
 from ldap3 import Server, Connection, Tls
 from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
@@ -21,8 +21,8 @@ class LDAPConn(object):
 
         self.Entry = LDAPEntry
         self.Attribute = LDAPAttribute
-
         self.Model = self.Entry
+        self._app = app
 
         if app is not None:
             self.init_app(app)
@@ -82,19 +82,25 @@ class LDAPConn(object):
         return ldap_conn
 
     def teardown(self, exception):
+        if hasattr(g, 'ldap_conn'):
+            g.ldap_conn.unbind()
+
         ctx = stack.top
         if hasattr(ctx, 'ldap_conn'):
             ctx.ldap_conn.unbind()
 
     @property
     def connection(self):
-        user = current_app.config['LDAP_BINDDN']
-        password = current_app.config['LDAP_SECRET']
+        if hasattr(g, 'ldap_conn'):
+            return g.ldap_conn
 
         ctx = stack.top
         if ctx is not None:
             if not hasattr(ctx, 'ldap_conn'):
-                ctx.ldap_conn = self.connect(user, password)
+                ctx.ldap_conn = self.connect(
+                    current_app.config['LDAP_BINDDN'],
+                    current_app.config['LDAP_SECRET']
+                )
             return ctx.ldap_conn
 
     def authenticate(self,

@@ -134,9 +134,7 @@ class LDAPEntry(object):
 
     @property
     def connection(self):
-        app = current_app._get_current_object()
-        ldapc = app.extensions.get('ldap_conn')
-        return ldapc
+        return current_app.extensions.get('ldap_conn')
 
     def delete(self):
         '''Delete this entry from LDAP server'''

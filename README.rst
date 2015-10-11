@@ -159,6 +159,16 @@ Authenticate with Client
         return 'Welcome %s.' % username
 
 
+Bind as user
+------------
+
+To bind as user for the current request save a new connection to ``flask.g.ldap_conn``:
+
+.. code-block:: python
+
+    g.ldap_conn = ldap.connect(userdn, password)
+    user = User.query.get(userdn)
+
 Unit Test
 ---------
 
