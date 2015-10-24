@@ -42,6 +42,7 @@ class LDAPConn(object):
         app.config.setdefault('LDAP_CERT_PATH', None)
         app.config.setdefault('LDAP_CLIENT_PRIVATE_KEY', None)
         app.config.setdefault('LDAP_CLIENT_CERT', None)
+        app.config.setdefault('LDAP_READ_ONLY', False)
 
         self.tls = Tls(
             local_private_key_file=app.config['LDAP_CLIENT_PRIVATE_KEY'],
@@ -76,7 +77,8 @@ class LDAPConn(object):
             client_strategy=STRATEGY_SYNC,
             user=user,
             password=password,
-            check_names=True
+            check_names=True,
+            read_only=current_app.config['LDAP_READ_ONLY']
         )
 
         return ldap_conn
