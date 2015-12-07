@@ -1,9 +1,14 @@
 Changelog
 =========
 
+0.6.8 (2015-12-07)
+------------------
+* Add read-only option
+* Update ldap3 to version 1.0.1
+
+
 0.6.7 (2015-10-11)
 ------------------
-
 * Use connections saved on flask.g.ldap_conn
 
 0.6.6 (2015-10-8)
