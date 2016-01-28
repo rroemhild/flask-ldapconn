@@ -15,6 +15,7 @@ class BaseQuery(object):
         self.base_dn = getattr(type, 'base_dn')
         self.sub_tree = getattr(type, 'sub_tree')
         self.object_def = getattr(type, '_object_def')
+        self.components_in_and = True
         self.operational_attributes = getattr(type, 'operational_attributes')
 
     def __iter__(self):
@@ -32,7 +33,7 @@ class BaseQuery(object):
                         object_def=self.object_def,
                         query=query,
                         base=self.base_dn,
-                        components_in_and=True,
+                        components_in_and=self.components_in_and,
                         sub_tree=self.sub_tree,
                         get_operational_attributes=self.operational_attributes,
                         controls=None)
@@ -70,6 +71,7 @@ class BaseQuery(object):
             return entry
         return None
 
-    def all(self):
+    def all(self, components_in_and=True):
         '''Return all of the results of a query in a list'''
+        self.components_in_and = components_in_and
         return [obj for obj in iter(self)]
