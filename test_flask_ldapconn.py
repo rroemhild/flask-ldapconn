@@ -148,6 +148,14 @@ class LDAPConnModelTestCase(unittest.TestCase):
             user = self.user.query.filter('userid: {}'.format(uid)).first()
             self.assertEqual(user.userid.value, uid)
 
+    def test_model_fetch_entry_with_components_in_and_false(self):
+            uid = 'bender'
+            with self.app.test_request_context():
+                user = self.user.query.filter(
+                    'email: {0}, userid: {0}'.format(uid)
+                ).all(components_in_and=False)
+                self.assertEqual(user[0].userid.value, uid)
+
     def test_model_fetch_entry_authenticate(self):
         uid = 'fry'
         with self.app.test_request_context():
