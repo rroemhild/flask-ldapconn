@@ -1,6 +1,10 @@
 Changelog
 =========
 
+0.6.12 (2016-04-03)
+-------------------
+* Update ldap3 to version 1.2.2
+
 0.6.11 (2016-01-28)
 -------------------
 * Use components_in_and flag in Reader object

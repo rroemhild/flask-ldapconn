@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-from ssl import CERT_REQUIRED, PROTOCOL_TLSv1
+import ssl
+
 from flask import current_app, g
 from flask import _app_ctx_stack as stack
 from ldap3 import Server, Connection, Tls
-from ldap3 import STRATEGY_SYNC, GET_ALL_INFO, SUBTREE
+from ldap3 import SYNC, GET_ALL_INFO, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
 from ldap3 import LDAPBindError, LDAPInvalidFilterError, LDAPInvalidDnError
 from ldap3.utils.dn import split_ava
@@ -28,6 +29,7 @@ class LDAPConn(object):
             self.init_app(app)
 
     def init_app(self, app):
+        ssl_defaults = ssl.get_default_verify_paths()
 
         # Default config
         app.config.setdefault('LDAP_SERVER', 'localhost')
@@ -35,21 +37,34 @@ class LDAPConn(object):
         app.config.setdefault('LDAP_BINDDN', None)
         app.config.setdefault('LDAP_SECRET', None)
         app.config.setdefault('LDAP_TIMEOUT', 10)
+        app.config.setdefault('LDAP_READ_ONLY', False)
+        app.config.setdefault('LDAP_VALID_NAMES', None)
+        app.config.setdefault('LDAP_PRIVATE_KEY_PASSWORD', None)
+
+        app.config.setdefault('LDAP_CONNECTION_STRATEGY', SYNC)
+
         app.config.setdefault('LDAP_USE_SSL', False)
         app.config.setdefault('LDAP_USE_TLS', True)
-        app.config.setdefault('LDAP_TLS_VERSION', PROTOCOL_TLSv1)
-        app.config.setdefault('LDAP_REQUIRE_CERT', CERT_REQUIRED)
-        app.config.setdefault('LDAP_CERT_PATH', None)
+        app.config.setdefault('LDAP_TLS_VERSION', ssl.PROTOCOL_TLSv1)
+        app.config.setdefault('LDAP_REQUIRE_CERT', ssl.CERT_REQUIRED)
+
         app.config.setdefault('LDAP_CLIENT_PRIVATE_KEY', None)
         app.config.setdefault('LDAP_CLIENT_CERT', None)
-        app.config.setdefault('LDAP_READ_ONLY', False)
+
+        app.config.setdefault('LDAP_CA_CERTS_FILE', ssl_defaults.cafile)
+        app.config.setdefault('LDAP_CA_CERTS_PATH', ssl_defaults.capath)
+        app.config.setdefault('LDAP_CA_CERTS_DATA', None)
 
         self.tls = Tls(
             local_private_key_file=app.config['LDAP_CLIENT_PRIVATE_KEY'],
             local_certificate_file=app.config['LDAP_CLIENT_CERT'],
             validate=app.config['LDAP_REQUIRE_CERT'],
             version=app.config['LDAP_TLS_VERSION'],
-            ca_certs_file=app.config['LDAP_CERT_PATH']
+            ca_certs_file=app.config['LDAP_CA_CERTS_FILE'],
+            valid_names=app.config['LDAP_VALID_NAMES'],
+            ca_certs_path=app.config['LDAP_CA_CERTS_PATH'],
+            ca_certs_data=app.config['LDAP_CA_CERTS_DATA'],
+            local_private_key_password=app.config['LDAP_PRIVATE_KEY_PASSWORD']
         )
 
         self.ldap_server = Server(
@@ -74,11 +89,11 @@ class LDAPConn(object):
         ldap_conn = Connection(
             self.ldap_server,
             auto_bind=auto_bind_strategy,
-            client_strategy=STRATEGY_SYNC,
+            client_strategy=current_app.config['LDAP_CONNECTION_STRATEGY'],
             user=user,
             password=password,
             check_names=True,
-            read_only=current_app.config['LDAP_READ_ONLY']
+            read_only=current_app.config['LDAP_READ_ONLY'],
         )
 
         return ldap_conn
