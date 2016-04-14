@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import current_app
-from ldap3 import Reader, utils
+from ldap3 import BASE, Reader
 
 
 __all__ = ('BaseQuery',)
@@ -41,15 +41,13 @@ class BaseQuery(object):
         return reader.entries
 
     def get(self, ldap_dn):
-        '''Return an LDAP entry
+        '''Return an LDAP entry by DN
 
         Args:
             ldap_dn (str): LDAP DN
         '''
-        rdns = utils.dn.to_dn(ldap_dn)
-        user_rdn = rdns.pop(0)
-        self.query.append('(' + user_rdn + ')')
-        self.base_dn = ','.join(rdns)
+        self.base_dn = ldap_dn
+        self.sub_tree = BASE
         return self.first()
 
     def filter(self, *query_filter):

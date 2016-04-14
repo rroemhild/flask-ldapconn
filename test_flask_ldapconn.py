@@ -187,6 +187,12 @@ class LDAPConnModelTestCase(unittest.TestCase):
             user = self.user.query.get(dn)
             self.assertEqual(dn, user.dn)
 
+    def test_model_get_multivalued_rdn(self):
+        dn = 'cn=Amy Wong+sn=Kroker,ou=people,dc=planetexpress,dc=com'
+        with self.app.test_request_context():
+            user = self.user.query.get(dn)
+            self.assertEqual('Kroker', user.surname.value)
+
     def test_model_get_attributes_dict(self):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: bender').first()
