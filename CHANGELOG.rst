@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.6.13 (2016-05-30)
+-------------------
+* Fix get entries with multivalued RDNs
+* Update ldap3 to version 1.3.1
+
 0.6.12 (2016-04-03)
 -------------------
 * Update ldap3 to version 1.2.2
