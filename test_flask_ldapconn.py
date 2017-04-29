@@ -108,7 +108,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
             entry = self.user.query.filter(
                 'email: %s' % self.app.config['USER_EMAIL']
             ).first()
-            self.assertEqual(entry.email.value,
+            self.assertEqual(entry.email,
                              self.app.config['USER_EMAIL'])
 
     def test_model_search_set_attribute(self):
@@ -118,7 +118,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
                 'email: %s' % self.app.config['USER_EMAIL']
             ).first()
             entry.email = new_email
-            self.assertEqual(entry.email.value, new_email)
+            self.assertEqual(entry.email, new_email)
 
     def test_model_search_set_attribute_list(self):
         new_email_list = ['philip@planetexpress.com',
@@ -128,7 +128,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
                 'email: %s' % self.app.config['USER_EMAIL']
             ).first()
             entry.email = new_email_list
-            self.assertEqual(entry.email.value, new_email_list)
+            self.assertEqual(entry.email, new_email_list)
 
     def test_model_search_set_undefined_attr(self):
         def new_model():
@@ -140,13 +140,13 @@ class LDAPConnModelTestCase(unittest.TestCase):
         with self.app.test_request_context():
             user = self.user(name='Rafael Römhild',
                              email='rafael@planetexpress.com')
-            self.assertEqual(user.email.value, 'rafael@planetexpress.com')
+            self.assertEqual(user.email, 'rafael@planetexpress.com')
 
     def test_model_fetch_entry(self):
         uid = 'bender'
         with self.app.test_request_context():
             user = self.user.query.filter('userid: {}'.format(uid)).first()
-            self.assertEqual(user.userid.value, uid)
+            self.assertEqual(user.userid, uid)
 
     def test_model_fetch_entry_with_components_in_and_false(self):
             uid = 'bender'
@@ -154,7 +154,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
                 user = self.user.query.filter(
                     'email: {0}, userid: {0}'.format(uid)
                 ).all(components_in_and=False)
-                self.assertEqual(user[0].userid.value, uid)
+                self.assertEqual(user[0].userid, uid)
 
     def test_model_fetch_entry_authenticate(self):
         uid = 'fry'
@@ -177,7 +177,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         with self.app.test_request_context():
             entries = self.user.query.filter(query_filter).all()
             for entry in entries:
-                response_uids.append(entry.userid.value)
+                response_uids.append(entry.userid)
         matched_uids = set(expected_uids).intersection(response_uids)
         self.assertEqual(len(expected_uids), len(matched_uids))
 
@@ -191,7 +191,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         dn = 'cn=Amy Wong+sn=Kroker,ou=people,dc=planetexpress,dc=com'
         with self.app.test_request_context():
             user = self.user.query.get(dn)
-            self.assertEqual('Kroker', user.surname.value)
+            self.assertEqual('Kroker', user.surname)
 
     def test_model_get_attributes_dict(self):
         with self.app.test_request_context():
@@ -236,7 +236,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: fry').first()
             user['userid'] = 'xyz'
-            self.assertEqual(user.userid.value, 'xyz')
+            self.assertEqual(user.userid, 'xyz')
 
     def test_model_attribute_str(self):
         with self.app.test_request_context():
@@ -246,7 +246,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
     def test_model_attribute_iter(self):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: professor').first()
-            self.assertTrue(isinstance(user.email.value, list))
+            self.assertTrue(isinstance(user.email, list))
             for mail in user.email:
                 pass
 
@@ -261,7 +261,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
                                  givenname='Raphael')
             self.assertTrue(new_user.save())
             user = self.user.query.filter(query_filter).first()
-            self.assertEqual(new_user.userid.value, user.userid.value)
+            self.assertEqual(new_user.userid, user.userid)
 
     def test_model_operation_modify(self):
         uid = 'rafael-{}'.format(UID_SUFFIX)
@@ -273,9 +273,9 @@ class LDAPConnModelTestCase(unittest.TestCase):
             mod_user.email.append('it@planetexpress.co')
             self.assertTrue(mod_user.save())
             user = self.user.query.filter(query_filter).first()
-            self.assertEqual(user.givenname.value, 'Rafael')
-            self.assertEqual(user.surname.value, u'Römhild')
-            self.assertEqual(user.title.value, 'SysAdmin')
+            self.assertEqual(user.givenname, 'Rafael')
+            self.assertEqual(user.surname, u'Römhild')
+            self.assertEqual(user.title, 'SysAdmin')
             self.assertTrue('it@planetexpress.co' in user.email)
 
     def test_model_operation_remove(self):
