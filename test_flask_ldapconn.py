@@ -9,7 +9,7 @@ import string
 import unittest
 import flask
 
-from ldap3 import SUBTREE, LDAPEntryError
+from ldap3 import SUBTREE, STRING_TYPES, LDAPEntryError
 from flask_ldapconn import LDAPConn
 
 from flask_ldapconn.entry import LDAPEntry
@@ -241,7 +241,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
     def test_model_attribute_str(self):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: fry').first()
-            self.assertTrue(isinstance(user.userid, self.ldap.Attribute))
+            self.assertTrue(isinstance(user.userid, STRING_TYPES))
 
     def test_model_attribute_iter(self):
         with self.app.test_request_context():
