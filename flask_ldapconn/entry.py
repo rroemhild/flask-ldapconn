@@ -78,7 +78,7 @@ class LDAPEntry(object):
         if item not in self._attributes:
             return None
 
-        return self._attributes[item]
+        return self._attributes[item].value
 
     def __setitem__(self, key, value):
         self.__setattr__(key, value)
