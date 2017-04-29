@@ -69,14 +69,18 @@ class LDAPEntry(object):
             yield self._attributes[attribute]
 
     def __contains__(self, item):
-        return True if self.__getitem__(item) else False
+        try:
+            self.__getitem__(item)
+        except AttributeError:
+            return False
+        return True
 
     def __getitem__(self, item):
         return self.__getattr__(item)
 
     def __getattr__(self, item):
         if item not in self._attributes:
-            return None
+            raise AttributeError('LDAP attribute {} not defined.'.format(item))
 
         return self._attributes[item].value
 
