@@ -270,7 +270,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
             mod_user = self.user.query.filter(query_filter).first()
             mod_user.givenname = 'Rafael'
             mod_user.title = 'SysAdmin'
-            mod_user.email.append('it@planetexpress.co')
+            mod_user.email = [mod_user.email, 'it@planetexpress.co']
             self.assertTrue(mod_user.save())
             user = self.user.query.filter(query_filter).first()
             self.assertEqual(user.givenname, 'Rafael')
