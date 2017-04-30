@@ -33,12 +33,20 @@ class LDAPEntryMeta(type):
         cls._attributes = dict()
         cls._object_def = ObjectDef(cls.object_classes)
 
+        # Merge attributes from parents
+        for base in bases:
+            if isinstance(base, LDAPEntryMeta):
+                cls._attributes.update(base._attributes)
+
         # loop through the namespace looking for LDAPAttribute instances
         for key, value in ns.items():
             if isinstance(value, LDAPAttribute):
                 cls._attributes[key] = value
-                attr_def = value.get_abstract_attr_def(key)
-                cls._object_def.add(attr_def)
+
+        # Generate attribute definitions
+        for key in cls._attributes:
+            attr_def = cls._attributes[key].get_abstract_attr_def(key)
+            cls._object_def.add(attr_def)
 
     @property
     def query(cls):
