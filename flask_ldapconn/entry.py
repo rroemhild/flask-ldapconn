@@ -31,12 +31,16 @@ class LDAPEntryMeta(type):
 
     def __init__(cls, name, bases, ns):
         cls._attributes = dict()
-        cls._object_def = ObjectDef(cls.object_classes)
 
-        # Merge attributes from parents
+        # Merge attributes and object classes from parents
         for base in bases:
             if isinstance(base, LDAPEntryMeta):
                 cls._attributes.update(base._attributes)
+                cls.object_classes += base.object_classes
+
+        # Deduplicate object classes and create object definition
+        cls.object_classes = list(set(cls.object_classes))
+        cls._object_def = ObjectDef(cls.object_classes)
 
         # loop through the namespace looking for LDAPAttribute instances
         for key, value in ns.items():
