@@ -69,25 +69,31 @@ class LDAPEntry(object):
             yield self._attributes[attribute]
 
     def __contains__(self, item):
-        return True if self.__getitem__(item) else False
+        return item in self._attributes
 
     def __getitem__(self, item):
-        return self.__getattr__(item)
+        if item in self.__attributes:
+            return self.__getattr__(item)
+        else:
+            raise KeyError(item)
 
-    def __getattr__(self, item):
-        if item not in self._attributes:
-            return None
-
-        return self._attributes[item]
+    def __getattribute__(self, item):
+        if item != '_attributes' and item in self._attributes:
+            return self._attributes[item].value
+        else:
+            return object.__getattribute__(self, item)
 
     def __setitem__(self, key, value):
-        self.__setattr__(key, value)
+        if key in self._attributes:
+            self.__setattr__(key, value)
+        else:
+            raise KeyError(key)
 
     def __setattr__(self, key, value):
-        if key not in self._attributes:
-            raise LDAPEntryError('attribute not found')
-
-        self._attributes[key].value = value
+        if key in self._attributes:
+            self._attributes[key].value = value
+        else:
+            return object.__setattr__(self, key, value)
 
     @property
     def dn(self):
