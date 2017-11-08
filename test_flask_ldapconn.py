@@ -56,16 +56,18 @@ class User(LDAPEntry):
     surname = LDAPAttribute('sn')
     givenname = LDAPAttribute('givenName')
 
+
 class Account(User):
     # LDAP meta-data
     object_classes = ['posixAccount']
 
     # posixAccount
-    uid = LDAPAttribute('uidNumber')
-    gid = LDAPAttribute('gidNumber')
+    uidnumber = LDAPAttribute('uidNumber')
+    gidnumber = LDAPAttribute('gidNumber')
     shell = LDAPAttribute('loginShell')
     home = LDAPAttribute('homeDirectory')
     password = LDAPAttribute('userPassword')
+
 
 class LDAPConnTestCase(unittest.TestCase):
 
@@ -281,6 +283,61 @@ class LDAPConnModelTestCase(unittest.TestCase):
             mod_user = self.user.query.filter(query_filter).first()
             mod_user.givenname = 'Rafael'
             mod_user.title = 'SysAdmin'
+            mod_user.email = [mod_user.email, 'it@planetexpress.co']
+            self.assertTrue(mod_user.save())
+            user = self.user.query.filter(query_filter).first()
+            self.assertEqual(user.givenname, 'Rafael')
+            self.assertEqual(user.surname, u'Römhild')
+            self.assertEqual(user.title, 'SysAdmin')
+            self.assertTrue('it@planetexpress.co' in user.email)
+
+    def test_model_operation_remove(self):
+        uid = 'rafael-{}'.format(UID_SUFFIX)
+        query_filter = 'userid: {}'.format(uid)
+        with self.app.test_request_context():
+            user = self.user.query.filter(query_filter).first()
+            user.delete()
+            user = self.user.query.filter(query_filter).first()
+            self.assertEqual(user, None)
+
+
+class LDAPConnModelInheritanceTestCase(unittest.TestCase):
+
+    def setUp(self):
+        app = flask.Flask(__name__)
+        app.config.from_object(__name__)
+        app.config.from_envvar('LDAP_SETTINGS', silent=True)
+        ldap = LDAPConn(app)
+
+        self.app = app
+        self.ldap = ldap
+        self.user = Account
+
+    def test_model_operation_add(self):
+        uid = 'rafael-{}'.format(UID_SUFFIX)
+        query_filter = 'userid: {}'.format(uid)
+        with self.app.test_request_context():
+            new_user = self.user(name='Rafael Römhild',
+                                 userid=uid,
+                                 email='rafael@planetexpress.com',
+                                 surname='Römhild',
+                                 givenname='Raphael',
+                                 uidnumber=1000,
+                                 gidnumber=1000,
+                                 shell='/bin/false',
+                                 home='/home/' + uid)
+            self.assertTrue(new_user.save())
+            user = self.user.query.filter(query_filter).first()
+            self.assertEqual(new_user.userid, user.userid)
+
+    def test_model_operation_modify(self):
+        uid = 'rafael-{}'.format(UID_SUFFIX)
+        query_filter = 'userid: {}'.format(uid)
+        with self.app.test_request_context():
+            mod_user = self.user.query.filter(query_filter).first()
+            mod_user.givenname = 'Rafael'
+            mod_user.title = 'SysAdmin'
+            mod_user.shell = '/bin/bash'
             mod_user.email = [mod_user.email, 'it@planetexpress.co']
             self.assertTrue(mod_user.save())
             user = self.user.query.filter(query_filter).first()
