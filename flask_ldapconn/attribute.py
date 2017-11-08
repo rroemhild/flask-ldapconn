@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from ldap3 import AttrDef, LDAPAttributeError
+from ldap3 import AttrDef
+from ldap3.core.exceptions import LDAPAttributeError
 from ldap3 import STRING_TYPES, MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
 
 

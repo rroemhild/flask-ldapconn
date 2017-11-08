@@ -21,9 +21,9 @@ class BaseQuery(object):
     def __iter__(self):
         for entry in self.get_reader_result():
             new_cls = self.type.get_new_type()
-            ldapentry = new_cls(dn=entry.entry_get_dn(),
+            ldapentry = new_cls(dn=entry.entry_dn,
                                 changetype='modify',
-                                **entry.entry_get_attributes_dict())
+                                **entry.entry_attributes_as_dict)
             yield ldapentry
 
     def get_reader_result(self):

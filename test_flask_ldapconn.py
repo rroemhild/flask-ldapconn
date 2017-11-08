@@ -9,7 +9,8 @@ import string
 import unittest
 import flask
 
-from ldap3 import SUBTREE, LDAPEntryError
+from ldap3 import SUBTREE
+from ldap3.core.exceptions import LDAPAttributeError
 from flask_ldapconn import LDAPConn
 
 from flask_ldapconn.entry import LDAPEntry
@@ -134,7 +135,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         def new_model():
             user = self.user(active='1')
         with self.app.test_request_context():
-            self.assertRaises(LDAPEntryError, new_model)
+            self.assertRaises(LDAPAttributeError, new_model)
 
     def test_model_new(self):
         with self.app.test_request_context():

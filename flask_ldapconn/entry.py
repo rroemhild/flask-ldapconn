@@ -7,7 +7,7 @@ from importlib import import_module
 
 from flask import current_app
 from ldap3 import ObjectDef
-from ldap3 import LDAPEntryError
+from ldap3.core.exceptions import LDAPAttributeError
 from ldap3.utils.dn import safe_dn
 from ldap3.utils.conv import check_json_dict, format_json
 
@@ -38,7 +38,7 @@ class LDAPEntryMeta(type):
             if isinstance(value, LDAPAttribute):
                 cls._attributes[key] = value
                 attr_def = value.get_abstract_attr_def(key)
-                cls._object_def.add(attr_def)
+                cls._object_def.add_attribute(attr_def)
 
     @property
     def query(cls):
@@ -61,7 +61,7 @@ class LDAPEntry(object):
 
         for key, value in kwargs.items():
             if key not in self._attributes:
-                raise LDAPEntryError('attribute not found')
+                raise LDAPAttributeError('attribute not found')
             self._attributes[key]._init = value
 
     def __iter__(self):
@@ -85,7 +85,7 @@ class LDAPEntry(object):
 
     def __setattr__(self, key, value):
         if key not in self._attributes:
-            raise LDAPEntryError('attribute not found')
+            raise LDAPAttributeError('attribute not found')
 
         self._attributes[key].value = value
 
