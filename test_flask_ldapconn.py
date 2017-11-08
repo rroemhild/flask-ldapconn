@@ -30,7 +30,6 @@ LDAP_BASEDN = 'dc=planetexpress,dc=com'
 LDAP_SEARCH_ATTR = 'mail'
 LDAP_SEARCH_FILTER = '(mail=%s)' % USER_EMAIL
 LDAP_QUERY_FILTER = 'email: %s' % USER_EMAIL
-LDAP_OBJECTCLASS = ['inetOrgPerson']
 LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1
 LDAP_REQUIRE_CERT = ssl.CERT_NONE
 
@@ -47,7 +46,7 @@ class User(LDAPEntry):
     # LDAP meta-data
     base_dn = LDAP_AUTH_BASEDN
     entry_rdn = ['cn', 'uid']
-    object_classes = LDAP_OBJECTCLASS
+    object_classes = ['inetOrgPerson']
 
     # inetOrgPerson
     name = LDAPAttribute('cn')
@@ -57,6 +56,16 @@ class User(LDAPEntry):
     surname = LDAPAttribute('sn')
     givenname = LDAPAttribute('givenName')
 
+class Account(User):
+    # LDAP meta-data
+    object_classes = ['posixAccount']
+
+    # posixAccount
+    uid = LDAPAttribute('uidNumber')
+    gid = LDAPAttribute('gidNumber')
+    shell = LDAPAttribute('loginShell')
+    home = LDAPAttribute('homeDirectory')
+    password = LDAPAttribute('userPassword')
 
 class LDAPConnTestCase(unittest.TestCase):
 
