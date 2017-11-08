@@ -36,10 +36,11 @@ class LDAPEntryMeta(type):
         for base in bases:
             if isinstance(base, LDAPEntryMeta):
                 cls._attributes.update(base._attributes)
-                cls.object_classes += base.object_classes
+                # Deduplicate object classes
+                cls.object_classes = list(
+                    set(cls.object_classes + base.object_classes))
 
-        # Deduplicate object classes and create object definition
-        cls.object_classes = list(set(cls.object_classes))
+        # Create object definition
         cls._object_def = ObjectDef(cls.object_classes)
 
         # loop through the namespace looking for LDAPAttribute instances
