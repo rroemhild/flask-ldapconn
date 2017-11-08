@@ -1,9 +1,12 @@
 Changelog
 =========
 
-0.7.0 (2017)
-------------
-* Update ldap3 to version 2.3.0
+0.7.0 (2017-11-09)
+------------------
+* Allow model inheritance (Dominik George)
+* Fix/revisit attribute access (Dominik George)
+* Update ldap3 to version 2.3
+* Update Flaks to 0.12
 
 0.6.13 (2016-05-30)
 -------------------
