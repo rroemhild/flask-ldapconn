@@ -28,9 +28,9 @@ setup(
     zip_safe=False,
     platforms='any',
     install_requires=[
-        'Flask==0.12.2',
-        'ldap3==2.3.0',
-        'six==1.11.0'
+        'Flask>=0.12',
+        'ldap3>=2.3',
+        'six>=1.10'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
