@@ -15,7 +15,10 @@ class LDAPAttribute(object):
         self.__dict__['dereference_dn'] = dereference_dn
 
     def __str__(self):
-        return self.value
+        if isinstance(self.value, STRING_TYPES):
+            return self.value
+        else:
+            return str(self.value)
 
     def __len__(self):
         return len(self.values)
