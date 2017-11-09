@@ -7,7 +7,7 @@ from importlib import import_module
 
 from flask import current_app
 from ldap3 import ObjectDef
-from ldap3 import LDAPEntryError
+from ldap3.core.exceptions import LDAPAttributeError
 from ldap3.utils.dn import safe_dn
 from ldap3.utils.conv import check_json_dict, format_json
 
@@ -36,10 +36,11 @@ class LDAPEntryMeta(type):
         for base in bases:
             if isinstance(base, LDAPEntryMeta):
                 cls._attributes.update(base._attributes)
-                cls.object_classes += base.object_classes
+                # Deduplicate object classes
+                cls.object_classes = list(
+                    set(cls.object_classes + base.object_classes))
 
-        # Deduplicate object classes and create object definition
-        cls.object_classes = list(set(cls.object_classes))
+        # Create object definition
         cls._object_def = ObjectDef(cls.object_classes)
 
         # loop through the namespace looking for LDAPAttribute instances
@@ -50,7 +51,7 @@ class LDAPEntryMeta(type):
         # Generate attribute definitions
         for key in cls._attributes:
             attr_def = cls._attributes[key].get_abstract_attr_def(key)
-            cls._object_def.add(attr_def)
+            cls._object_def.add_attribute(attr_def)
 
     @property
     def query(cls):
@@ -73,7 +74,7 @@ class LDAPEntry(object):
 
         for key, value in kwargs.items():
             if key not in self._attributes:
-                raise LDAPEntryError('attribute not found')
+                raise LDAPAttributeError('attribute not found')
             self._attributes[key]._init = value
 
     def __iter__(self):
@@ -81,25 +82,31 @@ class LDAPEntry(object):
             yield self._attributes[attribute]
 
     def __contains__(self, item):
-        return True if self.__getitem__(item) else False
+        return item in self._attributes
 
     def __getitem__(self, item):
-        return self.__getattr__(item)
+        if item in self.__attributes:
+            return self.__getattr__(item)
+        else:
+            raise KeyError(item)
 
-    def __getattr__(self, item):
-        if item not in self._attributes:
-            return None
-
-        return self._attributes[item]
+    def __getattribute__(self, item):
+        if item != '_attributes' and item in self._attributes:
+            return self._attributes[item].value
+        else:
+            return object.__getattribute__(self, item)
 
     def __setitem__(self, key, value):
-        self.__setattr__(key, value)
+        if key in self._attributes:
+            self.__setattr__(key, value)
+        else:
+            raise KeyError(key)
 
     def __setattr__(self, key, value):
-        if key not in self._attributes:
-            raise LDAPEntryError('attribute not found')
-
-        self._attributes[key].value = value
+        if key in self._attributes:
+            self._attributes[key].value = value
+        else:
+            return object.__setattr__(self, key, value)
 
     @property
     def dn(self):

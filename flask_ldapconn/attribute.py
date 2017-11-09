@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-from ldap3 import AttrDef, LDAPAttributeError
-from ldap3 import STRING_TYPES, MODIFY_ADD, MODIFY_DELETE, MODIFY_REPLACE
+from ldap3 import AttrDef
+from ldap3.core.exceptions import LDAPAttributeError
+from ldap3 import (STRING_TYPES, NUMERIC_TYPES, MODIFY_ADD, MODIFY_DELETE,
+                   MODIFY_REPLACE)
 
 
 class LDAPAttribute(object):
@@ -14,7 +16,10 @@ class LDAPAttribute(object):
         self.__dict__['dereference_dn'] = dereference_dn
 
     def __str__(self):
-        return self.value
+        if isinstance(self.value, STRING_TYPES):
+            return self.value
+        else:
+            return str(self.value)
 
     def __len__(self):
         return len(self.values)
@@ -39,13 +44,13 @@ class LDAPAttribute(object):
             else:
                 self.__dict__['changetype'] = MODIFY_ADD
 
-        if isinstance(value, STRING_TYPES):
+        if isinstance(value, (STRING_TYPES, NUMERIC_TYPES)):
             value = [value]
         self.__dict__['values'] = value
 
     @property
     def value(self):
-        '''Return the single value or a list of values of the attribute.'''
+        '''Return single value or list of values from the attribute.'''
         if len(self.__dict__['values']) == 1:
             return self.__dict__['values'][0]
         else:

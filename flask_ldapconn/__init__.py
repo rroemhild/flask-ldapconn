@@ -4,10 +4,11 @@ import ssl
 from flask import current_app, g
 from flask import _app_ctx_stack as stack
 from ldap3 import Server, Connection, Tls
-from ldap3 import SYNC, GET_ALL_INFO, SUBTREE
+from ldap3 import SYNC, ALL, SUBTREE
 from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
-from ldap3 import LDAPBindError, LDAPInvalidFilterError, LDAPInvalidDnError
-from ldap3.utils.dn import split_ava
+from ldap3.core.exceptions import (LDAPBindError, LDAPInvalidFilterError,
+                                   LDAPInvalidDnError)
+from ldap3.utils.dn import parse_dn
 
 from .entry import LDAPEntry
 from .attribute import LDAPAttribute
@@ -72,7 +73,7 @@ class LDAPConn(object):
             port=app.config['LDAP_PORT'],
             use_ssl=app.config['LDAP_USE_SSL'],
             tls=self.tls,
-            get_info=GET_ALL_INFO
+            get_info=ALL
         )
 
         # Store ldap_conn object to extensions
@@ -141,9 +142,17 @@ class LDAPConn(object):
             bool: ``True`` if successful or ``False`` if the
                 credentials are invalid.
         '''
-        # If the username is no valid DN we can bind with, we nee to find
+        # If the username is no valid DN we can bind with, we need to find
         # the user first.
-        if not split_ava(username)[0]:
+        valid_dn = False
+
+        try:
+            parse_dn(username)
+            valid_dn = True
+        except LDAPInvalidDnError:
+            pass
+
+        if valid_dn is False:
             user_filter = '({0}={1})'.format(attribute, username)
             if search_filter is not None:
                 user_filter = '(&{0}{1})'.format(user_filter, search_filter)
