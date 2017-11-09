@@ -25,7 +25,6 @@ setup(
     packages=[
         'flask_ldapconn'
     ],
-    zip_safe=False,
     platforms='any',
     install_requires=[
         'Flask>=0.12',
@@ -40,8 +39,10 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Framework :: Flask',
         'Topic :: Internet :: WWW/HTTP :: Dynamic Content',
         'Topic :: Software Development :: Libraries :: Python Modules'
-    ]
+    ],
 )
