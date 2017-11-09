@@ -4,8 +4,8 @@ Flask-LDAPConn
 .. image:: https://travis-ci.org/rroemhild/flask-ldapconn.svg?branch=master
     :target: https://travis-ci.org/rroemhild/flask-ldapconn
 
-.. image:: https://badge.fury.io/py/flask-ldapconn.svg
-    :target: https://pypi.python.org/pypi/flask-ldapconn
+.. image:: https://badge.fury.io/py/Flask-LDAPConn.svg
+    :target: https://badge.fury.io/py/Flask-LDAPConn
 
 Flask-LDAPConn is a Flask extension providing `ldap3 <https://github.com/cannatag/ldap3>`_ (an LDAP V3 pure Python client) connection for accessing LDAP servers.
 
