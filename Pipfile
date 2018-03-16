@@ -1,0 +1,18 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+flask = "*"
+"ldap3" = "*"
+six = "*"
+
+
+[dev-packages]
+
+docker = "*"
+pytest = "*"
