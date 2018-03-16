@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+from flask import current_app
+
 from ldap3 import AttrDef
 from ldap3.core.exceptions import LDAPAttributeError
 from ldap3 import (STRING_TYPES, NUMERIC_TYPES, MODIFY_ADD, MODIFY_DELETE,
@@ -35,7 +38,7 @@ class LDAPAttribute(object):
             raise LDAPAttributeError('can not set key')
 
         # set changetype
-        if item is 'value':
+        if item == 'value':
             if self.__dict__['values']:
                 if not value:
                     self.__dict__['changetype'] = MODIFY_DELETE
@@ -46,12 +49,16 @@ class LDAPAttribute(object):
 
         if isinstance(value, (STRING_TYPES, NUMERIC_TYPES)):
             value = [value]
+
         self.__dict__['values'] = value
 
     @property
     def value(self):
-        '''Return single value or list of values from the attribute.'''
-        if len(self.__dict__['values']) == 1:
+        '''Return single value or list of values from the attribute.
+           If FORCE_ATTRIBUTE_VALUE_AS_LIST is True, always return a
+           list with values.
+        '''
+        if len(self.__dict__['values']) == 1 and current_app.config['FORCE_ATTRIBUTE_VALUE_AS_LIST'] is False:
             return self.__dict__['values'][0]
         else:
             return self.__dict__['values']

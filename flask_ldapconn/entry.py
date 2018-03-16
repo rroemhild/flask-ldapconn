@@ -162,7 +162,7 @@ class LDAPEntry(object):
     def save(self):
         '''Save the current instance'''
         attributes = self.get_entry_add_dict(self.get_attributes_dict())
-        if self._changetype is 'add':
+        if self._changetype == 'add':
             return self.connection.connection.add(self.dn,
                                                   self.object_classes,
                                                   attributes)

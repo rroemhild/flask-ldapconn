@@ -56,6 +56,8 @@ class LDAPConn(object):
         app.config.setdefault('LDAP_CA_CERTS_PATH', ssl_defaults.capath)
         app.config.setdefault('LDAP_CA_CERTS_DATA', None)
 
+        app.config.setdefault('FORCE_ATTRIBUTE_VALUE_AS_LIST', False)
+
         self.tls = Tls(
             local_private_key_file=app.config['LDAP_CLIENT_PRIVATE_KEY'],
             local_certificate_file=app.config['LDAP_CLIENT_CERT'],

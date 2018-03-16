@@ -39,6 +39,12 @@ Your configuration should be declared within your Flask config. Sample configura
     LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2  # default: PROTOCOL_TLSv1
     LDAP_CERT_PATH = '/etc/openldap/certs'
 
+TIf you want to allways get the entry attribute value as a list, instead of a string if only one item is in the attribute set:
+
+.. code-block:: python
+
+    FORCE_ATTRIBUTE_VALUE_AS_LIST = True
+
 Create the ldap instance within your application:
 
 .. code-block:: python

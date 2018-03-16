@@ -10,7 +10,7 @@ import unittest
 import flask
 
 from ldap3 import SUBTREE, STRING_TYPES
-from ldap3.core.exceptions import LDAPAttributeError
+from ldap3.core.exceptions import LDAPAttributeError, LDAPStartTLSError
 
 from flask_ldapconn import LDAPConn
 
@@ -18,7 +18,6 @@ from flask_ldapconn.entry import LDAPEntry
 from flask_ldapconn.attribute import LDAPAttribute
 
 DOCKER_RUN = os.environ.get('DOCKER_RUN', True)
-DOCKER_URL = 'unix://var/run/docker.sock'
 
 TESTING = True
 USER_EMAIL = 'fry@planetexpress.com'
@@ -162,12 +161,12 @@ class LDAPConnModelTestCase(unittest.TestCase):
             self.assertEqual(user.userid, uid)
 
     def test_model_fetch_entry_with_components_in_and_false(self):
-            uid = 'bender'
-            with self.app.test_request_context():
-                user = self.user.query.filter(
-                    'email: {0}, userid: {0}'.format(uid)
-                ).all(components_in_and=False)
-                self.assertEqual(user[0].userid, uid)
+        uid = 'bender'
+        with self.app.test_request_context():
+            user = self.user.query.filter(
+                'email: {0}, userid: {0}'.format(uid)
+            ).all(components_in_and=False)
+            self.assertEqual(user[0].userid, uid)
 
     def test_model_fetch_entry_authenticate(self):
         uid = 'fry'
@@ -255,6 +254,12 @@ class LDAPConnModelTestCase(unittest.TestCase):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: fry').first()
             self.assertTrue(isinstance(user.userid, STRING_TYPES))
+
+    def test_model_attribute_value_force_list(self):
+        with self.app.test_request_context():
+            self.app.config['FORCE_ATTRIBUTE_VALUE_AS_LIST'] = True
+            user = self.user.query.filter('userid: fry').first()
+            self.assertTrue(isinstance(user.userid, list))
 
     def test_model_attribute_iter(self):
         with self.app.test_request_context():
@@ -526,15 +531,16 @@ if __name__ == '__main__':
         if DOCKER_RUN is not True:
             raise ValueError('Do not use docker')
 
-        from docker import Client
-        cli = Client(base_url=DOCKER_URL)
-        container = cli.create_container(image='rroemhild/test-openldap',
-                                         ports=[389, 636])
+        import docker
+        client = docker.from_env()
+        container = client.containers.run('rroemhild/test-openldap',
+                                          ports={'389/tcp': 389,
+                                                 '636/tcp': 636},
+                                          detach=True,
+                                          privileged=True,
+                                          remove=True)
 
-        print('Starting docker container {0}...'.format(container.get('Id')))
-        cli.start(container, privileged=True, port_bindings={389: 389,
-                                                             636: 636})
-
+        print('Docker container {0} started'.format(container.id))
         print('Wait 3 seconds until slapd is started...')
         time.sleep(3)
 
@@ -543,7 +549,7 @@ if __name__ == '__main__':
         success = runner.result.wasSuccessful()
 
         print('Stop and removing container...')
-        cli.remove_container(container, force=True)
+        container.stop()
     except (ImportError, ValueError):
         unittest.main()
 
