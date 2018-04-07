@@ -39,13 +39,19 @@ Your configuration should be declared within your Flask config. Sample configura
     LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2  # default: PROTOCOL_TLSv1
     LDAP_CERT_PATH = '/etc/openldap/certs'
 
-TIf you want to allways get the entry attribute value as a list, instead of a string if only one item is in the attribute set:
+If you want to always get any entry attribute value as a list, instead of a string if only one item is in the attribute list, then set:
 
 .. code-block:: python
 
     FORCE_ATTRIBUTE_VALUE_AS_LIST = True
 
-Create the ldap instance within your application:
+Default is ``False`` and will return a string if only one item is in the attribute list.
+
+
+Setup
+-----
+
+Create the LDAP instance in your application.
 
 .. code-block:: python
 
@@ -159,7 +165,7 @@ Authenticate with Client
 
     with app.app_context():
         retval = ldap.authenticate(username, password, attribute,
-                                   basedn, search_filter')
+                                   basedn, search_filter)
         if not retval:
             return 'Invalid credentials.'
         return 'Welcome %s.' % username
@@ -168,12 +174,13 @@ Authenticate with Client
 Bind as user
 ------------
 
-To bind as user for the current request save a new connection to ``flask.g.ldap_conn``:
+To bind as user for the current request instance a new connection from ``flask.g.ldap_conn``:
 
 .. code-block:: python
 
     g.ldap_conn = ldap.connect(userdn, password)
     user = User.query.get(userdn)
+
 
 Unit Test
 ---------

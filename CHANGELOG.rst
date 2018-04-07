@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.7.1 (2018-03-16)
+0.7.1 (2018-04-07)
 ------------------
 
 * Add setting FORCE_ATTRIBUTE_VALUE_AS_LIST
