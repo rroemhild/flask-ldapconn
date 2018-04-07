@@ -7,6 +7,7 @@ services:
 
 before_install:
 - docker pull rroemhild/test-openldap
+- docker run -d --privileged -p 127.0.0.1:389:389 -p 127.0.0.1:636:636 rroemhild/test-openldap
 
 python:
   - "2.7"
@@ -18,4 +19,4 @@ install:
   - pip install pipenv
   - pipenv install --dev
 
-script: python test_flask_ldapconn.py
+script: py.test

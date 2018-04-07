@@ -546,6 +546,7 @@ if __name__ == '__main__':
         print('Stop and removing container...')
         container.stop()
     except (ImportError, ValueError):
+        print('Can\'t run docker image. Try to run tests without.')
         unittest.main()
 
     if success is not True:
