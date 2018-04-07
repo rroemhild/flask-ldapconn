@@ -17,8 +17,6 @@ from flask_ldapconn import LDAPConn
 from flask_ldapconn.entry import LDAPEntry
 from flask_ldapconn.attribute import LDAPAttribute
 
-DOCKER_RUN = os.environ.get('DOCKER_RUN', True)
-
 TESTING = True
 USER_EMAIL = 'fry@planetexpress.com'
 USER_PASSWORD = 'fry'
@@ -528,9 +526,6 @@ class LDAPConnDeprecatedTestCase(LDAPConnTestCase):
 if __name__ == '__main__':
     success = False
     try:
-        if DOCKER_RUN is not True:
-            raise ValueError('Do not use docker')
-
         import docker
         client = docker.from_env()
         container = client.containers.run('rroemhild/test-openldap',
@@ -551,6 +546,7 @@ if __name__ == '__main__':
         print('Stop and removing container...')
         container.stop()
     except (ImportError, ValueError):
+        print('Can\'t run docker image. Try to run tests without.')
         unittest.main()
 
     if success is not True:
