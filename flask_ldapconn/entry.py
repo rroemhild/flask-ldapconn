@@ -181,10 +181,19 @@ class LDAPEntry(object):
         '''
         return self.connection.authenticate(self.dn, password)
 
-    def to_json(self, indent=2, sort=True):
+    def to_json(self, indent=2, sort=True, str_values=False):
         json_entry = dict()
         json_entry['dn'] = self.dn
-        json_entry['attributes'] = self.get_attributes_dict()
+
+        # Get "single values" from attributes as str instead list if
+        # `str_values=True` else get all attributes as list. This only
+        # works if `FORCE_ATTRIBUTE_VALUE_AS_LIST` is False (default).
+        if str_values is True:
+            json_entry['attributes'] = {}
+            for attr in self._attributes.keys():
+                json_entry['attributes'][attr] = self._attributes[attr].value
+        else:
+            json_entry['attributes'] = self.get_attributes_dict()
 
         if str == bytes:
             check_json_dict(json_entry)

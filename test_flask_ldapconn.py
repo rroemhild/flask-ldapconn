@@ -3,6 +3,7 @@
 import os
 import sys
 import ssl
+import json
 import time
 import random
 import string
@@ -37,6 +38,14 @@ LDAP_AUTH_SEARCH_FILTER = '(objectClass=inetOrgPerson)'
 UID_SUFFIX = ''.join(random.choice(
     string.ascii_lowercase + string.digits
 ) for _ in range(6))
+
+
+def is_json(myjson):
+    try:
+        json.loads(myjson)
+    except (ValueError, TypeError):
+        return False
+    return True
 
 
 class User(LDAPEntry):
@@ -213,18 +222,14 @@ class LDAPConnModelTestCase(unittest.TestCase):
                 self.assertTrue(isinstance(attr_dict[attr], list))
 
     def test_model_to_json(self):
-        import json
-
-        def is_json(myjson):
-            try:
-                json.loads(myjson)
-            except (ValueError, TypeError):
-                return False
-            return True
-
         with self.app.test_request_context():
             user = self.user.query.filter('userid: bender').first()
             self.assertTrue(is_json(user.to_json()))
+
+    def test_model_to_json_str_values(self):
+        with self.app.test_request_context():
+            user = self.user.query.filter('userid: bender').first()
+            self.assertTrue(is_json(user.to_json(str_values=True)))
 
     def test_model_iter(self):
         with self.app.test_request_context():
