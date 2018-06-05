@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os
 import sys
 import ssl
 import json
 import time
 import random
 import string
+import warnings
 import unittest
 import flask
 
@@ -17,6 +17,7 @@ from flask_ldapconn import LDAPConn
 
 from flask_ldapconn.entry import LDAPEntry
 from flask_ldapconn.attribute import LDAPAttribute
+
 
 TESTING = True
 USER_EMAIL = 'fry@planetexpress.com'
@@ -78,6 +79,8 @@ class Account(User):
 class LDAPConnTestCase(unittest.TestCase):
 
     def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
         app = flask.Flask(__name__)
         app.config.from_object(__name__)
         app.config.from_envvar('LDAP_SETTINGS', silent=True)
@@ -105,8 +108,7 @@ class LDAPConnSearchTestCase(LDAPConnTestCase):
     def test_whoami(self):
         with self.app.test_request_context():
             conn = self.ldap.connection
-            whoami = conn.extend.standard.who_am_i()
-            self.assertEqual(whoami,
+            self.assertEqual(conn.extend.standard.who_am_i(),
                              'dn:{}'.format(self.app.config['LDAP_BINDDN']))
 
 
@@ -445,8 +447,7 @@ class LDAPConnSSLTestCase(unittest.TestCase):
     def test_whoami(self):
         with self.app.test_request_context():
             conn = self.ldap.connection
-            whoami = conn.extend.standard.who_am_i()
-            self.assertEqual(whoami,
+            self.assertEqual(conn.extend.standard.who_am_i(),
                              'dn:{}'.format(self.app.config['LDAP_BINDDN']))
 
 
@@ -482,9 +483,12 @@ class LDAPConnTLSCertRequiredTestCase(unittest.TestCase):
         self.app = app
         self.ldap = ldap
 
-    def connection(self):
+    def connect(self):
+        return self.ldap.connection
+
+    def test_connection(self):
         with self.app.test_request_context():
-            self.assertRaises(LDAPStartTLSError, self.ldap.connection)
+            self.assertRaises(LDAPStartTLSError, self.connect)
 
 
 class LDAPConnNoTLSAnonymousTestCase(unittest.TestCase):
