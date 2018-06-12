@@ -36,7 +36,7 @@ class LDAPConn(object):
         app.config.setdefault('LDAP_PORT', 389)
         app.config.setdefault('LDAP_BINDDN', None)
         app.config.setdefault('LDAP_SECRET', None)
-        app.config.setdefault('LDAP_TIMEOUT', 10)
+        app.config.setdefault('LDAP_CONNECT_TIMEOUT', 10)
         app.config.setdefault('LDAP_READ_ONLY', False)
         app.config.setdefault('LDAP_VALID_NAMES', None)
         app.config.setdefault('LDAP_PRIVATE_KEY_PASSWORD', None)
@@ -74,6 +74,7 @@ class LDAPConn(object):
             host=app.config['LDAP_SERVER'],
             port=app.config['LDAP_PORT'],
             use_ssl=app.config['LDAP_USE_SSL'],
+            connect_timeout=app.config['LDAP_CONNECT_TIMEOUT'],
             tls=self.tls,
             get_info=ALL
         )
