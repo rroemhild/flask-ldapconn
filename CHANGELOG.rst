@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.7.2 (2018-06-14)
+------------------
+
+* Add support to return string values in JSON
+* Add support for LDAP_RAISE_EXCEPTIONS (Robert Wikman)
+* Rename LDAP_TIMEOUT to LDAP_CONNECT_TIMEOUT (Robert Wikman)
+
 0.7.1 (2018-04-07)
 ------------------
 
