@@ -157,7 +157,7 @@ class LDAPEntry(object):
 
     def delete(self):
         '''Delete this entry from LDAP server'''
-        self.connection.connection.delete(self.dn)
+        return self.connection.connection.delete(self.dn)
 
     def save(self):
         '''Save the current instance'''
