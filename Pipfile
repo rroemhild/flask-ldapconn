@@ -16,3 +16,4 @@ six = "*"
 
 docker = "*"
 pytest = "*"
+coverage = "*"
