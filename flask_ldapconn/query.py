@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
+import sys
 from flask import current_app
-from ldap3 import BASE, Reader
+from ldap3 import BASE, Reader, SUBTREE, ObjectDef
 
 
 __all__ = ('BaseQuery',)
@@ -8,19 +9,24 @@ __all__ = ('BaseQuery',)
 
 class BaseQuery(object):
 
-    def __init__(self, type):
-        self.type = type
-
+    def __init__(self, obj):
+        self.obj = obj
         self.query = []
-        self.base_dn = getattr(type, 'base_dn')
-        self.sub_tree = getattr(type, 'sub_tree')
-        self.object_def = getattr(type, '_object_def')
+        self.base_dn = obj.base_dn
+        self.sub_tree = obj.sub_tree
+        self.object_def = ObjectDef(obj.object_classes)
+        self.operational_attributes = obj.operational_attributes
         self.components_in_and = True
-        self.operational_attributes = getattr(type, 'operational_attributes')
+
+    def add_abstract_attr_def(self):
+        for name, attr in self.obj._fields.items():
+            attr_def = attr.get_abstract_attr_def(name)
+            self.object_def.add_attribute(attr_def)
 
     def __iter__(self):
         for entry in self.get_reader_result():
-            new_cls = self.type.get_new_type()
+            module = sys.modules.get(self.obj.__module__)
+            new_cls = getattr(module, self.obj.__name__)
             ldapentry = new_cls(dn=entry.entry_dn,
                                 changetype='modify',
                                 **entry.entry_attributes_as_dict)
@@ -29,6 +35,7 @@ class BaseQuery(object):
     def get_reader_result(self):
         query = ','.join(self.query)
         ldapc = current_app.extensions.get('ldap_conn')
+        self.add_abstract_attr_def()
         reader = Reader(connection=ldapc.connection,
                         object_def=self.object_def,
                         query=query,

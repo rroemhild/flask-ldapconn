@@ -15,7 +15,7 @@ from ldap3.core.exceptions import LDAPAttributeError, LDAPStartTLSError
 from flask_ldapconn import LDAPConn
 
 from flask_ldapconn.entry import LDAPEntry
-from flask_ldapconn.attribute import LDAPAttribute
+from flask_ldapconn.attribute import LdapField
 
 
 TESTING = True
@@ -55,12 +55,12 @@ class User(LDAPEntry):
     object_classes = ['inetOrgPerson']
 
     # inetOrgPerson
-    name = LDAPAttribute('cn')
-    email = LDAPAttribute('mail')
-    title = LDAPAttribute('title')
-    userid = LDAPAttribute('uid')
-    surname = LDAPAttribute('sn')
-    givenname = LDAPAttribute('givenName')
+    name = LdapField('cn')
+    email = LdapField('mail')
+    title = LdapField('title')
+    userid = LdapField('uid')
+    surname = LdapField('sn')
+    givenname = LdapField('givenName')
 
 
 class Account(User):
@@ -68,11 +68,11 @@ class Account(User):
     object_classes = ['posixAccount']
 
     # posixAccount
-    uidnumber = LDAPAttribute('uidNumber')
-    gidnumber = LDAPAttribute('gidNumber')
-    shell = LDAPAttribute('loginShell')
-    home = LDAPAttribute('homeDirectory')
-    password = LDAPAttribute('userPassword')
+    uidnumber = LdapField('uidNumber')
+    gidnumber = LdapField('gidNumber')
+    shell = LdapField('loginShell')
+    home = LdapField('homeDirectory')
+    password = LdapField('userPassword')
 
 
 class LDAPConnTestCase(unittest.TestCase):
@@ -233,23 +233,23 @@ class LDAPConnModelTestCase(unittest.TestCase):
     def test_model_iter(self):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: bender').first()
-            for attr in user:
-                self.assertTrue(isinstance(attr, self.ldap.Attribute))
+            for name, field in user._fields.items():
+                self.assertTrue(isinstance(field, self.ldap.Attribute))
 
     def test_model_contains(self):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: bender').first()
-            self.assertTrue('userid' in user)
+            self.assertTrue(hasattr(user, 'userid'))
 
     def test_model_getarr_att_not_found(self):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: bender').first()
-            self.assertFalse('active' in user)
+            self.assertFalse(hasattr(user, 'active'))
 
-    def test_model_setitem(self):
+    def test_model_setattr(self):
         with self.app.test_request_context():
             user = self.user.query.filter('userid: fry').first()
-            user['userid'] = 'xyz'
+            user.userid = 'xyz'
             self.assertEqual(user.userid, 'xyz')
 
     def test_model_attribute_str(self):
@@ -303,7 +303,7 @@ class LDAPConnModelTestCase(unittest.TestCase):
         query_filter = 'userid: {}'.format(uid)
         with self.app.test_request_context():
             user = self.user.query.filter(query_filter).first()
-            user.delete()
+            self.assertTrue(user.delete())
             user = self.user.query.filter(query_filter).first()
             self.assertEqual(user, None)
 
@@ -358,7 +358,7 @@ class LDAPConnModelInheritanceTestCase(unittest.TestCase):
         query_filter = 'userid: {}'.format(uid)
         with self.app.test_request_context():
             user = self.user.query.filter(query_filter).first()
-            user.delete()
+            self.assertTrue(user.delete())
             user = self.user.query.filter(query_filter).first()
             self.assertEqual(user, None)
 
