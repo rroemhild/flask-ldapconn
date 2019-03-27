@@ -10,7 +10,7 @@ from ldap3.core.exceptions import (LDAPBindError, LDAPInvalidFilterError,
 from ldap3.utils.dn import parse_dn
 
 from .entry import LDAPEntry
-from .attribute import LDAPAttribute
+from .attribute import LdapField
 
 
 __all__ = ('LDAPConn',)
@@ -21,7 +21,7 @@ class LDAPConn(object):
     def __init__(self, app=None):
 
         self.Entry = LDAPEntry
-        self.Attribute = LDAPAttribute
+        self.Attribute = LdapField
         self.Model = self.Entry
         self.app = app
 

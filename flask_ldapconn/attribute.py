@@ -8,15 +8,27 @@ from ldap3 import (STRING_TYPES, NUMERIC_TYPES, MODIFY_ADD, MODIFY_DELETE,
                    MODIFY_REPLACE)
 
 
-class LDAPAttribute(object):
+class LdapField(object):
 
     def __init__(self, name, validate=None, default=None, dereference_dn=None):
+        self.name = name
+        self.validate = validate
+        self.default = default
+        self.dereference_dn = None
+
+    def get_abstract_attr_def(self, key):
+        return AttrDef(name=self.name, key=key,
+                       validate=self.validate,
+                       default=self.default,
+                       dereference_dn=self.dereference_dn)
+
+
+class LDAPAttribute(object):
+
+    def __init__(self, name):
         self.__dict__['name'] = name
         self.__dict__['values'] = []
-        self.__dict__['default'] = default
-        self.__dict__['validate'] = validate
         self.__dict__['changetype'] = None
-        self.__dict__['dereference_dn'] = dereference_dn
 
     def __str__(self):
         if isinstance(self.value, STRING_TYPES):
@@ -85,9 +97,3 @@ class LDAPAttribute(object):
         to delete.
         '''
         self.value = []
-
-    def get_abstract_attr_def(self, key):
-        return AttrDef(name=self.name, key=key,
-                       validate=self.validate,
-                       default=self.default,
-                       dereference_dn=self.dereference_dn)

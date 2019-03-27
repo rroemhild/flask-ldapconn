@@ -1,19 +1,15 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
-flask = "*"
-"ldap3" = "*"
-six = "*"
-
+ldap3 = ">=2.3"
+six = ">=1.10"
+Flask = ">=0.12"
 
 [dev-packages]
-
 docker = "*"
 pytest = "*"
 coverage = "*"
+pathlib2 = "*"
