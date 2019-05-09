@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.8.0 (2019-05-09)
+------------------
+
+* Refactored LDAPAttribute class (Alexei Margasov @alexei38)
+* Add support for Python 3.7
+* End support for Python 3.4
+* Update requirements in Pipfile.lock
+
 0.7.2 (2018-06-14)
 ------------------
 
