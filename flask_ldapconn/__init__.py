@@ -4,7 +4,8 @@ import ssl
 from flask import current_app, _app_ctx_stack
 from ldap3 import Server, Connection, Tls
 from ldap3 import SYNC, ALL, SUBTREE
-from ldap3 import AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
+from ldap3 import AUTO_BIND_NONE, AUTO_BIND_NO_TLS, AUTO_BIND_TLS_BEFORE_BIND
+from ldap3 import ANONYMOUS, SIMPLE, SASL
 from ldap3.core.exceptions import (LDAPBindError, LDAPInvalidFilterError,
                                    LDAPInvalidDnError)
 from ldap3.utils.dn import parse_dn
@@ -87,14 +88,20 @@ class LDAPConn(object):
 
     def connect(self, user, password):
         auto_bind_strategy = AUTO_BIND_TLS_BEFORE_BIND
+        authentication_policy = SIMPLE
         if current_app.config['LDAP_USE_TLS'] is not True:
             auto_bind_strategy = AUTO_BIND_NO_TLS
+        if current_app.config['LDAP_SECRET'] is None:
+            authentication_policy = ANONYMOUS
+            user = None
+            password = None
 
         ldap_conn = Connection(
             self.ldap_server,
             auto_bind=auto_bind_strategy,
             client_strategy=current_app.config['LDAP_CONNECTION_STRATEGY'],
             raise_exceptions=current_app.config['LDAP_RAISE_EXCEPTIONS'],
+            authentication=authentication_policy,
             user=user,
             password=password,
             check_names=True,
