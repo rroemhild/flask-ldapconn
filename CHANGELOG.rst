@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.9.0 (2019-08-17)
+------------------
+
+* Fix anonymous binding where no security layer is of need at all (Matthias Tafelmeier @cherusk)
+
 0.8.0 (2019-05-09)
 ------------------
 
