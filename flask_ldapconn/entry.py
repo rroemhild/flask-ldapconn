@@ -120,7 +120,7 @@ class LDAPEntry(object):
     def get_entry_add_dict(self, attr_dict):
         add_dict = dict()
         for attribute_key, attribute_value in attr_dict.items():
-            if self._attributes[attribute_key].value:
+            if self._attributes[attribute_key].value != []:
                 add_dict.update({self._get_field_name(attribute_key): attribute_value})
         return add_dict
 
