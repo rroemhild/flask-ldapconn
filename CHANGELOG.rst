@@ -1,10 +1,16 @@
 Changelog
 =========
 
+0.10.0 (2019-10-20)
+-------------------
+
+* End support for Python 2.7
+* fix adding zero integer attribute value (HAMANO Tsukasa)
+
 0.9.0 (2019-08-17)
 ------------------
 
-* Fix anonymous binding where no security layer is of need at all (Matthias Tafelmeier @cherusk)
+* Fix anonymous binding where no security layer is need at all (Matthias Tafelmeier @cherusk)
 
 0.8.0 (2019-05-09)
 ------------------
