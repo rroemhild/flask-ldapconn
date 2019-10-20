@@ -10,7 +10,6 @@ before_install:
 - docker run -d --privileged -p 127.0.0.1:389:389 -p 127.0.0.1:636:636 rroemhild/test-openldap
 
 python:
-  - "2.7"
   - "3.5"
   - "3.6"
   - "3.7"
