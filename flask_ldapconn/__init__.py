@@ -86,12 +86,12 @@ class LDAPConn(object):
         # Teardown appcontext
         app.teardown_appcontext(self.teardown)
 
-    def connect(self, user, password):
+    def connect(self, user, password, anonymous=False):
         auto_bind_strategy = AUTO_BIND_TLS_BEFORE_BIND
         authentication_policy = SIMPLE
         if current_app.config['LDAP_USE_TLS'] is not True:
             auto_bind_strategy = AUTO_BIND_NO_TLS
-        if current_app.config['LDAP_SECRET'] is None:
+        if anonymous:
             authentication_policy = ANONYMOUS
             user = None
             password = None
@@ -122,7 +122,8 @@ class LDAPConn(object):
             if not hasattr(ctx, 'ldap_conn'):
                 ctx.ldap_conn = self.connect(
                     current_app.config['LDAP_BINDDN'],
-                    current_app.config['LDAP_SECRET']
+                    current_app.config['LDAP_SECRET'],
+                    anonymous=None in [current_app.config['LDAP_BINDDN'], current_app.config['LDAP_SECRET']]
                 )
             return ctx.ldap_conn
 
