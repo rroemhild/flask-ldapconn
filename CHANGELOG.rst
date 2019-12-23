@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.10.1 (2010-12-23)
+-------------------
+
+* Fix security issue: allows authentication without password (Roland)
+
 0.10.0 (2019-10-20)
 -------------------
 
