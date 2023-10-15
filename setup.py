@@ -29,7 +29,6 @@ setup(
     install_requires=[
         'Flask>=0.12',
         'ldap3>=2.3',
-        'six>=1.10'
     ],
     classifiers=[
         'Development Status :: 5 - Production/Stable',

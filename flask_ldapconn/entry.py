@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 from flask import current_app
-from six import add_metaclass
 from ldap3.utils.dn import safe_dn
 from ldap3.utils.conv import check_json_dict, format_json
 from ldap3.core.exceptions import LDAPAttributeError
@@ -33,8 +32,7 @@ class LDAPEntryMeta(type):
         return BaseQuery(cls)
 
 
-@add_metaclass(LDAPEntryMeta)
-class LDAPEntry(object):
+class LDAPEntry(object, metaclass=LDAPEntryMeta):
 
     base_dn = None
     entry_rdn = ['cn']
