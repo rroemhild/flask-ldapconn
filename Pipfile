@@ -5,7 +5,6 @@ name = "pypi"
 
 [packages]
 ldap3 = ">=2.3"
-six = ">=1.10"
 Flask = ">=0.12"
 
 [dev-packages]
