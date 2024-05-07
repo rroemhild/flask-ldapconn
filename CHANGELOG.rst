@@ -1,7 +1,13 @@
 Changelog
 =========
 
-0.10.1 (2010-12-23)
+0.10.2 (2024-05-07)
+-------------------
+
+* Replace deprecated _app_ctx_stack.top with g in app init
+* Remove dependency on deprecated python3-six
+
+0.10.1 (2019-12-23)
 -------------------
 
 * Fix security issue: allows authentication without password (Roland)
